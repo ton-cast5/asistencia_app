@@ -1,9 +1,1 @@
 Flask
-python-dotenv
-geopy
-qrcode
-supabase
-Pillow
-Flask
-requests
-gunicorn
