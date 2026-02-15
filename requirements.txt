@@ -2,3 +2,6 @@ Flask
 python-dotenv
 geopy
 qrcode
+flask-cors
+supabase
+
