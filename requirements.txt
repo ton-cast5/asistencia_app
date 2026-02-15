@@ -2,5 +2,5 @@ Flask
 python-dotenv
 geopy
 qrcode
-
-
+supabase
+Pillow
