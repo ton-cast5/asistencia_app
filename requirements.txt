@@ -4,3 +4,6 @@ geopy
 qrcode
 supabase
 Pillow
+Flask
+requests
+gunicorn
