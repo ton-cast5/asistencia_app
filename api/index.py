@@ -16,13 +16,6 @@ from geopy.distance import geodesic
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-key-vercel-2026')
 
-# ========== IMPORTAR DATABASE ==========
-# Asegúrate de tener database.py con get_db() funcional
-try:
-    from database import get_db
-except ImportError:
-    from .database import get_db
-
 # ========== FUNCIONES DE UTILERÍA ==========
 
 def hash_password(password):
@@ -672,9 +665,8 @@ def justificar_asistencia():
 
 # ========== HEALTH CHECK ==========
 
-@app.route('/health')
+@app.route('/api/health')
 def health():
-    """Health check para Vercel"""
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat()
