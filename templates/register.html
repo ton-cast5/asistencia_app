@@ -929,8 +929,8 @@
             const icon = document.getElementById('matriculaIcon');
             const feedback = document.getElementById('matriculaFeedback');
             
-            // Nuevo formato: 8 caracteres alfanuméricos (ej: 232H17024)
-            const patron = /^[A-Z0-9]{8}$/;
+            // Nuevo formato: 9 caracteres alfanuméricos (ej: 112H11111)
+            const patron = /^[A-Z0-9]{9}$/;
             
             if (matricula.length === 0) {
                 icon.innerHTML = '<i class="fas fa-id-card"></i>';
@@ -945,7 +945,7 @@
                 return true;
             } else {
                 icon.innerHTML = '<i class="fas fa-exclamation-circle" style="color: var(--danger-color);"></i>';
-                feedback.innerHTML = '<i class="fas fa-times"></i> Formato: 8 caracteres (ej: 232H17024)';
+                feedback.innerHTML = '<i class="fas fa-times"></i> Formato: 9 caracteres (ej: 112H11111)';
                 feedback.className = 'validation-feedback invalid';
                 return false;
             }
@@ -1310,8 +1310,8 @@
             const icon = document.getElementById('matriculaIcon');
             const feedback = document.getElementById('matriculaFeedback');
             
-            // Nuevo formato: 8 caracteres alfanuméricos
-            const patron = /^[A-Z0-9]{8}$/;
+            // Nuevo formato: 9 caracteres alfanuméricos
+            const patron = /^[A-Z0-9]{9}$/;
             
             if (matricula.length === 0) {
                 icon.innerHTML = '<i class="fas fa-id-card"></i>';
@@ -1321,7 +1321,7 @@
             
             if (!patron.test(matricula)) {
                 icon.innerHTML = '<i class="fas fa-exclamation-circle" style="color: var(--danger-color);"></i>';
-                feedback.innerHTML = '<i class="fas fa-times"></i> Formato: 8 caracteres (ej: 232H17024)';
+                feedback.innerHTML = '<i class="fas fa-times"></i> Formato: 9 caracteres (ej: 112H11111)';
                 feedback.className = 'validation-feedback invalid';
                 return false;
             }
