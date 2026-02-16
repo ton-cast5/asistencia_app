@@ -726,7 +726,7 @@
                     <label><i class="fas fa-id-card"></i> Matrícula *</label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="matricula" 
-                               placeholder="2024-1234" required>
+                               placeholder="232H17024" maxlength="8" required>
                         <span class="input-icon" id="matriculaIcon">
                             <i class="fas fa-id-card"></i>
                         </span>
@@ -923,11 +923,14 @@
 
         // ===== VALIDACIONES =====
         function validarMatricula() {
-            const matricula = document.getElementById('matricula').value;
+            const matricula = document.getElementById('matricula').value.toUpperCase();
+            document.getElementById('matricula').value = matricula;
+            
             const icon = document.getElementById('matriculaIcon');
             const feedback = document.getElementById('matriculaFeedback');
             
-            const patron = /^\d{4}-[A-Z0-9]{4,8}$/;
+            // Nuevo formato: 8 caracteres alfanuméricos (ej: 232H17024)
+            const patron = /^[A-Z0-9]{8}$/;
             
             if (matricula.length === 0) {
                 icon.innerHTML = '<i class="fas fa-id-card"></i>';
@@ -942,7 +945,7 @@
                 return true;
             } else {
                 icon.innerHTML = '<i class="fas fa-exclamation-circle" style="color: var(--danger-color);"></i>';
-                feedback.innerHTML = '<i class="fas fa-times"></i> Formato: 2024-1234';
+                feedback.innerHTML = '<i class="fas fa-times"></i> Formato: 8 caracteres (ej: 232H17024)';
                 feedback.className = 'validation-feedback invalid';
                 return false;
             }
@@ -1132,7 +1135,7 @@
             
             // Recopilar datos
             const userData = {
-                matricula: document.getElementById('matricula').value,
+                matricula: document.getElementById('matricula').value.toUpperCase(),
                 nombre: document.getElementById('nombre').value,
                 email: document.getElementById('email').value,
                 password: document.getElementById('password').value,
@@ -1299,13 +1302,16 @@
             return true;
         }
 
-        // Modificar validarMatricula para verificar existencia
+        // Modificar validarMatricula para nuevo formato
         async function validarMatricula() {
-            const matricula = document.getElementById('matricula').value;
+            const matricula = document.getElementById('matricula').value.toUpperCase();
+            document.getElementById('matricula').value = matricula;
+            
             const icon = document.getElementById('matriculaIcon');
             const feedback = document.getElementById('matriculaFeedback');
             
-            const patron = /^\d{4}-[A-Z0-9]{4,8}$/;
+            // Nuevo formato: 8 caracteres alfanuméricos
+            const patron = /^[A-Z0-9]{8}$/;
             
             if (matricula.length === 0) {
                 icon.innerHTML = '<i class="fas fa-id-card"></i>';
@@ -1315,7 +1321,7 @@
             
             if (!patron.test(matricula)) {
                 icon.innerHTML = '<i class="fas fa-exclamation-circle" style="color: var(--danger-color);"></i>';
-                feedback.innerHTML = '<i class="fas fa-times"></i> Formato: 2024-1234';
+                feedback.innerHTML = '<i class="fas fa-times"></i> Formato: 8 caracteres (ej: 232H17024)';
                 feedback.className = 'validation-feedback invalid';
                 return false;
             }
