@@ -1,4 +1,4 @@
-<!-- templates/dashboard_alumno.html - VERSIÓN CORREGIDA PARA PRODUCCIÓN -->
+<!-- templates/dashboard_alumno.html - VERSIÓN PRODUCCIÓN CON CONFIRMACIÓN -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -80,12 +80,6 @@
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
-        }
-
-        @keyframes successPulse {
-            0% { transform: scale(0.8); opacity: 0; }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); opacity: 1; }
         }
 
         /* ===== BACKGROUND DECORATION ===== */
@@ -432,7 +426,7 @@
             opacity: 0.3;
         }
 
-        /* ===== SCANNER MODAL ===== */
+        /* ===== MODALS ===== */
         .modal {
             display: none;
             position: fixed;
@@ -499,6 +493,7 @@
             color: var(--dark);
         }
 
+        /* ===== SCANNER MODAL ===== */
         #reader {
             width: 100%;
             border-radius: var(--radius-md);
@@ -515,6 +510,207 @@
         .camera-error i {
             font-size: 48px;
             margin-bottom: 16px;
+        }
+
+        /* ===== CONFIRMATION MODAL (NUEVO) ===== */
+        .confirmation-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: rgba(67, 97, 238, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: var(--primary);
+        }
+
+        .class-info-card {
+            background: var(--light);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin: 20px 0;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 14px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 16px 0;
+            padding: 12px;
+            background: var(--light);
+            border-radius: var(--radius-md);
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-wrapper label {
+            font-size: 14px;
+            color: var(--dark);
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .modal-footer .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-secondary {
+            background: var(--light);
+            color: var(--dark);
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .btn-success {
+            background: var(--gradient-success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* ===== SUCCESS MODAL ===== */
+        .success-modal {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .success-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .success-content {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 40px 30px;
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+            animation: pulse 0.5s ease;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: var(--gradient-success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+        }
+
+        .success-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .success-message {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 20px;
+        }
+
+        .success-details {
+            background: var(--light);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .success-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .success-detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .success-detail-label {
+            font-size: 13px;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        .success-detail-value {
+            font-size: 13px;
+            color: var(--dark);
+            font-weight: 600;
         }
 
         /* ===== LOADING OVERLAY ===== */
@@ -613,93 +809,6 @@
             height: 24px;
         }
 
-        /* ===== SUCCESS MODAL ===== */
-        .success-modal {
-            display: none;
-            position: fixed;
-            z-index: 3000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            animation: fadeIn 0.3s ease;
-        }
-
-        .success-modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .success-content {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: 40px 30px;
-            text-align: center;
-            max-width: 90%;
-            width: 400px;
-            animation: successPulse 0.5s ease;
-        }
-
-        .success-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
-            background: var(--gradient-success);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            color: white;
-            animation: successPulse 0.6s ease;
-        }
-
-        .success-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--dark);
-            margin-bottom: 10px;
-        }
-
-        .success-message {
-            font-size: 14px;
-            color: var(--gray);
-            margin-bottom: 20px;
-        }
-
-        .success-details {
-            background: var(--light);
-            border-radius: var(--radius-sm);
-            padding: 16px;
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .success-detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .success-detail-row:last-child {
-            border-bottom: none;
-        }
-
-        .success-detail-label {
-            font-size: 13px;
-            color: var(--gray);
-            font-weight: 500;
-        }
-
-        .success-detail-value {
-            font-size: 13px;
-            color: var(--dark);
-            font-weight: 600;
-        }
-
         /* ===== RESPONSIVE ===== */
         @media (max-width: 480px) {
             body {
@@ -721,6 +830,10 @@
 
             .toast {
                 min-width: auto;
+            }
+
+            .modal-footer {
+                flex-direction: column;
             }
         }
     </style>
@@ -809,7 +922,7 @@
         </div>
     </div>
 
-    <!-- Scanner Modal -->
+    <!-- SCANNER MODAL -->
     <div id="scannerModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -823,7 +936,62 @@
         </div>
     </div>
 
-    <!-- Success Modal -->
+    <!-- CONFIRMATION MODAL (NUEVO) -->
+    <div id="confirmacionModal" class="modal">
+        <div class="modal-content">
+            <div class="confirmation-icon">
+                <i class="fas fa-qrcode"></i>
+            </div>
+            <h3 style="text-align: center; margin-bottom: 10px;">Confirmar Asistencia</h3>
+            <p style="text-align: center; color: var(--gray); margin-bottom: 20px;">
+                ¿Estás seguro de registrar tu asistencia?
+            </p>
+            
+            <div class="class-info-card" id="classInfoCard">
+                <div class="info-row">
+                    <span class="info-label">📚 Materia</span>
+                    <span class="info-value" id="infoMateria">Cargando...</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">👨‍🏫 Profesor</span>
+                    <span class="info-value" id="infoProfesor">Cargando...</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">📅 Fecha</span>
+                    <span class="info-value" id="infoFecha">Cargando...</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">🕐 Hora</span>
+                    <span class="info-value" id="infoHora">Cargando...</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">📍 Ubicación</span>
+                    <span class="info-value" id="infoUbicacion">No disponible</span>
+                </div>
+            </div>
+
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="compartirUbicacion" checked>
+                <label for="compartirUbicacion">
+                    <strong>Compartir mi ubicación</strong><br>
+                    <span style="font-size: 12px; color: var(--gray);">Para validar que estás en el aula</span>
+                </label>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="cerrarConfirmacion()">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </button>
+                <button class="btn-success" onclick="confirmarYEnviar()">
+                    <i class="fas fa-check"></i>
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUCCESS MODAL -->
     <div id="successModal" class="success-modal">
         <div class="success-content">
             <div class="success-icon">
@@ -832,7 +1000,7 @@
             <div class="success-title">¡Asistencia Registrada!</div>
             <div class="success-message">Tu asistencia ha sido registrada exitosamente</div>
             <div class="success-details" id="successDetails">
-                <!-- Se llenará dinámicamente -->
+                <!-- Se llena dinámicamente -->
             </div>
             <button class="action-btn primary" onclick="cerrarSuccessModal()" style="width: 100%;">
                 <i class="fas fa-check"></i>
@@ -859,7 +1027,8 @@
         let html5QrCode = null;
         let scannerActivo = false;
         let intervaloActualizacion = null;
-        let usuarioId = null; // CORREGIDO: Ahora usamos usuario_id
+        let usuarioId = localStorage.getItem('usuario_id');
+        let qrDataPendiente = null;
 
         // ===== INICIALIZACIÓN =====
         document.addEventListener('DOMContentLoaded', function() {
@@ -867,18 +1036,12 @@
             
             // Verificar autenticación
             const telefonoId = localStorage.getItem('telefono_id');
-            const userIdStorage = localStorage.getItem('usuario_id'); // CORREGIDO
             
-            console.log("📱 Teléfono ID:", telefonoId);
-            console.log("👤 Usuario ID:", userIdStorage);
-            
-            if (!telefonoId || !userIdStorage) {
+            if (!telefonoId || !usuarioId) {
                 console.error("❌ No hay sesión válida");
                 window.location.href = '/';
                 return;
             }
-            
-            usuarioId = userIdStorage; // CORREGIDO
             
             // Cargar datos iniciales
             cargarDatosUsuario();
@@ -905,7 +1068,6 @@
                 if (!response.ok) throw new Error('Error al cargar datos');
                 
                 const data = await response.json();
-                console.log("Usuario data:", data);
                 
                 if (data.nombre) {
                     document.getElementById('userName').textContent = data.nombre;
@@ -937,7 +1099,6 @@
                 if (!response.ok) throw new Error('Error al cargar estadísticas');
                 
                 const data = await response.json();
-                console.log("Estadísticas:", data);
                 
                 document.getElementById('statTotal').textContent = data.total_clases || 0;
                 document.getElementById('statPresent').textContent = data.asistencias || 0;
@@ -963,7 +1124,6 @@
                 if (!response.ok) throw new Error('Error al cargar actividad');
                 
                 const data = await response.json();
-                console.log("Actividad:", data);
                 
                 const lista = document.getElementById('activityList');
                 
@@ -1025,8 +1185,6 @@
 
         // ===== SCANNER QR =====
         async function abrirScanner() {
-            console.log("📷 Abriendo scanner...");
-            
             const modal = document.getElementById('scannerModal');
             modal.classList.add('active');
             
@@ -1062,8 +1220,6 @@
                         throw new Error("No se encontraron cámaras");
                     }
                     
-                    console.log("Cámaras disponibles:", devices);
-                    
                     let cameraId = devices[0].id;
                     const backCamera = devices.find(device => 
                         device.label.toLowerCase().includes('back') || 
@@ -1084,7 +1240,6 @@
                     );
                     
                 } catch (cameraError) {
-                    console.log("Error con cámaras específicas, intentando con facingMode");
                     await html5QrCode.start(
                         { facingMode: "environment" },
                         config,
@@ -1113,25 +1268,21 @@
         }
 
         function onScanSuccess(decodedText, decodedResult) {
-            console.log("✅ QR escaneado:", decodedText);
-            
             // Vibrar si es posible
             if (navigator.vibrate) {
                 navigator.vibrate(200);
             }
             
-            // Detener scanner inmediatamente
+            // Detener scanner
             detenerScanner();
+            cerrarScanner();
             
             // Procesar el QR
             procesarQR(decodedText);
         }
 
         function onScanError(errorMessage) {
-            // Ignorar errores normales de escaneo
-            if (errorMessage && !errorMessage.includes('NotFoundException')) {
-                console.log('Error escaneo:', errorMessage);
-            }
+            // Solo ignoramos errores normales
         }
 
         function detenerScanner() {
@@ -1155,71 +1306,125 @@
             document.getElementById('reader').innerHTML = '';
         }
 
-        // ===== PROCESAR ASISTENCIA =====
+        // ===== NUEVO: PROCESAR QR Y MOSTRAR CONFIRMACIÓN =====
         async function procesarQR(textoQR) {
-            cerrarScanner();
             mostrarLoading(true);
             
             try {
-                // Intentar obtener ubicación (opcional)
-                let latitud = null, longitud = null;
-                
+                // Intentar parsear el QR
+                let qrInfo;
                 try {
-                    const position = await new Promise((resolve, reject) => {
-                        const timeout = setTimeout(() => reject(new Error('timeout')), 5000);
-                        navigator.geolocation.getCurrentPosition(
-                            (pos) => {
-                                clearTimeout(timeout);
-                                resolve(pos);
-                            },
-                            (err) => {
-                                clearTimeout(timeout);
-                                reject(err);
-                            },
-                            {
-                                timeout: 5000,
-                                maximumAge: 60000,
-                                enableHighAccuracy: false
-                            }
-                        );
-                    });
-                    
-                    latitud = position.coords.latitude;
-                    longitud = position.coords.longitude;
-                    console.log("📍 Ubicación obtenida:", latitud, longitud);
-                    
-                } catch (geoError) {
-                    console.log("⚠️ Ubicación no disponible:", geoError.message);
+                    qrInfo = JSON.parse(textoQR);
+                } catch (e) {
+                    mostrarToast('❌ Código QR inválido', 'error');
+                    mostrarLoading(false);
+                    return;
                 }
                 
-                console.log("📤 Enviando asistencia...", {
-                    qr_data: textoQR,
-                    telefono_id: localStorage.getItem('telefono_id'),
-                    usuario_id: usuarioId, // CORREGIDO
-                    latitud: latitud,
-                    longitud: longitud
-                });
+                // Guardar datos del QR
+                qrDataPendiente = {
+                    texto: textoQR,
+                    clase_id: qrInfo.clase_id,
+                    timestamp: qrInfo.timestamp
+                };
                 
-                // CORREGIDO: Ahora enviamos usuario_id
+                // Obtener información de la clase
+                const response = await fetch(`/api/clase/${qrInfo.clase_id}`);
+                
+                if (!response.ok) {
+                    throw new Error('No se pudo obtener información de la clase');
+                }
+                
+                const claseData = await response.json();
+                
+                // Actualizar modal de confirmación
+                const ahora = new Date();
+                document.getElementById('infoMateria').textContent = claseData.materia || 'Clase';
+                document.getElementById('infoProfesor').textContent = claseData.profesor_nombre || 'Profesor';
+                document.getElementById('infoFecha').textContent = ahora.toLocaleDateString('es-MX', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                document.getElementById('infoHora').textContent = ahora.toLocaleTimeString('es-MX', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                document.getElementById('infoUbicacion').textContent = 
+                    claseData.latitud_referencia ? 'Disponible' : 'No requerida';
+                
+                mostrarLoading(false);
+                
+                // Mostrar modal de confirmación
+                document.getElementById('confirmacionModal').classList.add('active');
+                
+            } catch (error) {
+                console.error('Error procesando QR:', error);
+                mostrarLoading(false);
+                mostrarToast('❌ Error al procesar el código QR', 'error');
+            }
+        }
+
+        // ===== NUEVO: CONFIRMAR Y ENVIAR ASISTENCIA =====
+        async function confirmarYEnviar() {
+            cerrarConfirmacion();
+            mostrarLoading(true);
+            
+            try {
+                const compartirUbicacion = document.getElementById('compartirUbicacion').checked;
+                let latitud = null, longitud = null;
+                
+                // Obtener ubicación si el usuario aceptó
+                if (compartirUbicacion) {
+                    try {
+                        const position = await new Promise((resolve, reject) => {
+                            const timeout = setTimeout(() => reject(new Error('timeout')), 5000);
+                            navigator.geolocation.getCurrentPosition(
+                                (pos) => {
+                                    clearTimeout(timeout);
+                                    resolve(pos);
+                                },
+                                (err) => {
+                                    clearTimeout(timeout);
+                                    reject(err);
+                                },
+                                {
+                                    timeout: 5000,
+                                    maximumAge: 60000,
+                                    enableHighAccuracy: false
+                                }
+                            );
+                        });
+                        
+                        latitud = position.coords.latitude;
+                        longitud = position.coords.longitude;
+                        
+                    } catch (geoError) {
+                        console.log("Ubicación no disponible:", geoError.message);
+                        // Continuamos sin ubicación
+                    }
+                }
+                
+                // Enviar asistencia
                 const response = await fetch('/api/registrar-asistencia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        qr_data: textoQR,
+                        qr_data: qrDataPendiente.texto,
                         telefono_id: localStorage.getItem('telefono_id'),
-                        usuario_id: usuarioId, // CORREGIDO: Usamos usuario_id
+                        usuario_id: usuarioId,
                         latitud: latitud,
                         longitud: longitud
                     })
                 });
                 
                 const data = await response.json();
-                console.log("📨 Respuesta del servidor:", data);
                 
                 mostrarLoading(false);
                 
                 if (data.success) {
-                    // Mostrar modal de éxito con detalles
+                    // Mostrar modal de éxito
                     mostrarSuccessModal(data);
                     
                     // Recargar datos después de un momento
@@ -1233,10 +1438,15 @@
                 }
                 
             } catch (error) {
-                console.error('❌ Error en procesarQR:', error);
+                console.error('Error:', error);
                 mostrarLoading(false);
-                mostrarToast('❌ Error de conexión al registrar asistencia', 'error');
+                mostrarToast('❌ Error de conexión', 'error');
             }
+        }
+
+        function cerrarConfirmacion() {
+            document.getElementById('confirmacionModal').classList.remove('active');
+            qrDataPendiente = null;
         }
 
         // ===== SUCCESS MODAL =====
@@ -1275,6 +1485,12 @@
                     <span class="success-detail-value">${data.profesor}</span>
                 </div>
                 ` : ''}
+                ${data.distancia ? `
+                <div class="success-detail-row">
+                    <span class="success-detail-label">📍 Distancia</span>
+                    <span class="success-detail-value">${data.distancia.toFixed(2)}m</span>
+                </div>
+                ` : ''}
             `;
             
             modal.classList.add('active');
@@ -1311,7 +1527,6 @@
             
             container.appendChild(toast);
             
-            // Auto eliminar después de 5 segundos
             setTimeout(() => {
                 if (toast.parentElement) {
                     toast.remove();
@@ -1332,10 +1547,14 @@
         // ===== EVENTOS =====
         window.onclick = function(event) {
             const scannerModal = document.getElementById('scannerModal');
+            const confirmModal = document.getElementById('confirmacionModal');
             const successModal = document.getElementById('successModal');
             
             if (event.target === scannerModal) {
                 cerrarScanner();
+            }
+            if (event.target === confirmModal) {
+                cerrarConfirmacion();
             }
             if (event.target === successModal) {
                 cerrarSuccessModal();
