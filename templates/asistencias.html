@@ -1590,7 +1590,9 @@
                 if (!AppState.claseActiva?.id) {
                     throw new Error('No hay clase activa');
                 }
-                return this.request(`${CONFIG.API_ENDPOINTS.ASISTENCIAS}/${AppState.claseActiva.id}/asistencias?timestamp=${Date.now()}`);
+                // ✅ AHORA USA LA URL CORRECTA: /api/clase/{clase_id}/asistencias
+                const url = `${CONFIG.API_ENDPOINTS.ASISTENCIAS}/${AppState.claseActiva.id}/asistencias?timestamp=${Date.now()}`;
+                return this.request(url);
             },
 
             async justificarFalta(data) {
