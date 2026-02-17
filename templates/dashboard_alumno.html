@@ -1,4 +1,4 @@
-<!-- templates/dashboard_alumno.html - VERSIÓN COMPLETA CON SCANNER FUNCIONAL -->
+<!-- templates/dashboard_alumno.html - VERSIÓN CORREGIDA PARA PRODUCCIÓN -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -80,6 +80,12 @@
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes successPulse {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
         }
 
         /* ===== BACKGROUND DECORATION ===== */
@@ -233,14 +239,14 @@
         .stat-icon {
             width: 36px;
             height: 36px;
+            margin: 0 auto 8px;
             background: rgba(67, 97, 238, 0.1);
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 8px;
             color: var(--primary);
-            font-size: 18px;
+            font-size: 16px;
         }
 
         .stat-card.present .stat-icon {
@@ -262,8 +268,7 @@
             font-size: 24px;
             font-weight: 800;
             color: var(--dark);
-            line-height: 1.2;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
         .stat-label {
@@ -274,213 +279,87 @@
             letter-spacing: 0.5px;
         }
 
-        /* ===== PROGRESS CARD ===== */
-        .progress-card {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
-            border-radius: var(--radius-lg);
-            padding: 20px;
+        /* ===== ACTION BUTTONS ===== */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
             margin-bottom: 16px;
-            box-shadow: var(--shadow-lg);
         }
 
-        .progress-header {
+        .action-btn {
+            background: white;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 16px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 14px;
-        }
-
-        .progress-header h3 {
-            font-size: 16px;
+            justify-content: center;
+            gap: 10px;
+            font-size: 14px;
             font-weight: 600;
-            color: var(--dark);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .progress-percentage {
-            font-size: 28px;
-            font-weight: 800;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .progress-bar-container {
-            width: 100%;
-            height: 14px;
-            background: #e9ecef;
-            border-radius: 20px;
-            margin: 14px 0;
-            overflow: hidden;
-        }
-
-        .progress-bar {
-            height: 100%;
-            border-radius: 20px;
-            transition: width 1s ease;
-            position: relative;
-        }
-
-        .progress-bar.green { background: var(--gradient-success); }
-        .progress-bar.yellow { background: var(--gradient-warning); }
-        .progress-bar.orange { background: linear-gradient(135deg, #fb8b24, #e07b20); }
-        .progress-bar.red { background: var(--gradient-danger); }
-
-        .progress-stats {
-            display: flex;
-            justify-content: space-between;
-            color: var(--gray);
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        /* ===== QR SCANNER BUTTON ===== */
-        .scanner-card {
-            background: var(--gradient-primary);
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: var(--shadow-xl);
             cursor: pointer;
             transition: all 0.3s ease;
-            border: none;
-            width: 100%;
-        }
-
-        .scanner-card:hover {
-            transform: scale(1.02);
-            box-shadow: 0 20px 40px rgba(67, 97, 238, 0.4);
-        }
-
-        .scanner-card:active {
-            transform: scale(0.98);
-        }
-
-        .scanner-content {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .scanner-icon {
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            color: white;
-            flex-shrink: 0;
-        }
-
-        .scanner-text {
-            flex: 1;
-            text-align: left;
-        }
-
-        .scanner-text h3 {
-            font-size: 18px;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 4px;
-        }
-
-        .scanner-text p {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .scanner-arrow {
-            width: 36px;
-            height: 36px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 16px;
-            animation: pulse 2s infinite;
-        }
-
-        /* ===== SEMÁFORO ===== */
-        .semaforo-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-
-        .semaforo-item {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
-            border-radius: var(--radius-md);
-            padding: 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
             box-shadow: var(--shadow-md);
-        }
-
-        .semaforo-dot {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .semaforo-dot.verde { background: var(--success); }
-        .semaforo-dot.amarillo { background: var(--warning); }
-        .semaforo-dot.naranja { background: #fb8b24; }
-        .semaforo-dot.rojo { background: var(--danger); }
-
-        .semaforo-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .semaforo-info h4 {
-            font-size: 13px;
-            font-weight: 600;
             color: var(--dark);
-            margin-bottom: 2px;
         }
 
-        .semaforo-info p {
-            font-size: 11px;
-            color: var(--gray);
+        .action-btn i {
+            font-size: 20px;
         }
 
-        /* ===== ACTIVITY CARD ===== */
-        .activity-card {
+        .action-btn.primary {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* ===== ACTIVITY SECTION ===== */
+        .activity-section {
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(10px);
             border-radius: var(--radius-lg);
             padding: 20px;
-            margin-bottom: 16px;
             box-shadow: var(--shadow-lg);
         }
 
-        .activity-header {
+        .section-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 14px;
+            justify-content: space-between;
+            margin-bottom: 16px;
         }
 
-        .activity-header h3 {
+        .section-title {
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--dark);
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 4px;
+            transition: transform 0.2s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: rotate(90deg);
         }
 
         .activity-list {
@@ -493,153 +372,118 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 10px;
+            padding: 12px;
             background: var(--light);
             border-radius: var(--radius-sm);
-            transition: all 0.2s ease;
+            transition: transform 0.2s ease;
         }
 
         .activity-item:hover {
-            background: white;
             transform: translateX(4px);
         }
 
         .activity-icon {
-            width: 36px;
-            height: 36px;
-            background: rgba(67, 97, 238, 0.1);
-            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--primary);
+            font-size: 16px;
             flex-shrink: 0;
         }
 
-        .activity-icon.success {
+        .activity-icon.present {
             background: rgba(6, 214, 160, 0.1);
             color: var(--success);
         }
 
-        .activity-icon.warning {
-            background: rgba(255, 209, 102, 0.1);
-            color: var(--warning);
+        .activity-icon.absent {
+            background: rgba(239, 71, 111, 0.1);
+            color: var(--danger);
         }
 
-        .activity-details {
+        .activity-info {
             flex: 1;
             min-width: 0;
         }
 
         .activity-title {
-            font-weight: 600;
             font-size: 14px;
+            font-weight: 600;
             color: var(--dark);
             margin-bottom: 2px;
         }
 
-        .activity-time {
+        .activity-meta {
             font-size: 12px;
             color: var(--gray);
         }
 
-        /* ===== QUICK ACTIONS ===== */
-        .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 16px;
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray);
         }
 
-        .action-btn {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
-            border-radius: var(--radius-md);
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            box-shadow: var(--shadow-md);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            color: var(--dark);
-            border: none;
-            font-family: inherit;
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.3;
         }
 
-        .action-btn:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .action-btn i {
-            font-size: 22px;
-            color: var(--primary);
-        }
-
-        .action-btn span {
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        /* ===== MODAL ===== */
+        /* ===== SCANNER MODAL ===== */
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(5px);
             z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            animation: fadeIn 0.3s ease;
         }
 
         .modal.active {
             display: flex;
-            animation: fadeIn 0.3s ease;
+            align-items: center;
+            justify-content: center;
         }
 
         .modal-content {
             background: white;
             border-radius: var(--radius-lg);
-            max-width: 450px;
-            width: 100%;
+            padding: 20px;
+            max-width: 90%;
+            width: 500px;
             max-height: 90vh;
             overflow-y: auto;
             animation: slideUp 0.3s ease;
         }
 
         .modal-header {
-            padding: 18px 20px;
-            border-bottom: 1px solid #e9ecef;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
         }
 
-        .modal-header h2 {
-            font-size: 18px;
+        .modal-title {
+            font-size: 20px;
             font-weight: 700;
             color: var(--dark);
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin: 0;
+            gap: 10px;
         }
 
-        .modal-close {
+        .close-btn {
             background: none;
             border: none;
-            font-size: 28px;
-            line-height: 1;
-            cursor: pointer;
+            font-size: 24px;
             color: var(--gray);
+            cursor: pointer;
             padding: 0;
             width: 32px;
             height: 32px;
@@ -647,67 +491,33 @@
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
         }
 
-        .modal-close:hover {
+        .close-btn:hover {
             background: var(--light);
-            color: var(--danger);
-        }
-
-        .modal-body {
-            padding: 20px;
+            color: var(--dark);
         }
 
         #reader {
             width: 100%;
             border-radius: var(--radius-md);
             overflow: hidden;
-            background: #000;
-        }
-
-        #reader video {
-            width: 100%;
-            display: block;
-        }
-
-        .scan-instruction {
-            text-align: center;
-            margin-top: 14px;
-            color: var(--gray);
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+            background: var(--dark);
         }
 
         .camera-error {
-            background: rgba(239, 71, 111, 0.1);
-            border: 1px solid var(--danger);
-            border-radius: var(--radius-md);
-            padding: 16px;
             text-align: center;
+            padding: 40px 20px;
             color: var(--danger);
         }
 
         .camera-error i {
-            font-size: 32px;
-            margin-bottom: 8px;
+            font-size: 48px;
+            margin-bottom: 16px;
         }
 
-        .camera-error p {
-            margin: 8px 0;
-            font-size: 14px;
-        }
-
-        .camera-loading {
-            text-align: center;
-            padding: 40px;
-            color: var(--gray);
-        }
-
-        /* ===== LOADING ===== */
+        /* ===== LOADING OVERLAY ===== */
         .loading-overlay {
             display: none;
             position: fixed;
@@ -715,87 +525,183 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(0, 0, 0, 0.8);
             z-index: 2000;
             align-items: center;
             justify-content: center;
-            flex-direction: column;
-            gap: 16px;
+            animation: fadeIn 0.3s ease;
         }
 
         .loading-overlay.active {
             display: flex;
         }
 
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
         .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid var(--light);
-            border-top-color: var(--primary);
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
         }
 
-        .loading-overlay p {
-            color: var(--dark);
-            font-weight: 600;
-        }
-
-        /* ===== TOAST ===== */
+        /* ===== TOAST NOTIFICATIONS ===== */
         .toast-container {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 3000;
-            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .toast {
             background: white;
             border-radius: var(--radius-md);
-            box-shadow: var(--shadow-lg);
-            padding: 14px 16px;
-            margin-bottom: 10px;
+            padding: 16px 20px;
+            box-shadow: var(--shadow-xl);
             display: flex;
             align-items: center;
             gap: 12px;
+            min-width: 280px;
+            max-width: 400px;
             animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
             border-left: 4px solid var(--success);
         }
 
         .toast.error {
-            border-left-color: var(--danger);
+            border-left: 4px solid var(--danger);
         }
 
-        .toast.warning {
-            border-left-color: var(--warning);
+        .toast.info {
+            border-left: 4px solid var(--primary);
         }
 
         .toast i {
             font-size: 20px;
         }
 
+        .toast.success i { color: var(--success); }
+        .toast.error i { color: var(--danger); }
+        .toast.info i { color: var(--primary); }
+
         .toast span {
             flex: 1;
             font-size: 14px;
+            font-weight: 500;
+            color: var(--dark);
         }
 
         .toast button {
             background: none;
             border: none;
+            color: var(--gray);
             font-size: 20px;
             cursor: pointer;
-            color: var(--gray);
             padding: 0;
             width: 24px;
             height: 24px;
+        }
+
+        /* ===== SUCCESS MODAL ===== */
+        .success-modal {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .success-modal.active {
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
+        .success-content {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 40px 30px;
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+            animation: successPulse 0.5s ease;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: var(--gradient-success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+            animation: successPulse 0.6s ease;
+        }
+
+        .success-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .success-message {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 20px;
+        }
+
+        .success-details {
+            background: var(--light);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .success-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .success-detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .success-detail-label {
+            font-size: 13px;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        .success-detail-value {
+            font-size: 13px;
+            color: var(--dark);
+            font-weight: 600;
+        }
+
         /* ===== RESPONSIVE ===== */
-        @media (max-width: 400px) {
+        @media (max-width: 480px) {
             body {
                 padding: 12px;
             }
@@ -803,437 +709,361 @@
             .stats-grid {
                 grid-template-columns: 1fr;
             }
-            
-            .semaforo-grid {
+
+            .action-buttons {
                 grid-template-columns: 1fr;
-            }
-            
-            .scanner-content {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .scanner-text {
-                text-align: center;
             }
 
             .toast-container {
-                left: 12px;
-                right: 12px;
-                max-width: none;
+                left: 10px;
+                right: 10px;
+            }
+
+            .toast {
+                min-width: auto;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Background Decorations -->
+    <!-- Background Decoration -->
     <div class="bg-decoration">
         <div class="bg-circle circle1"></div>
         <div class="bg-circle circle2"></div>
     </div>
-
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
-        <p>Procesando...</p>
-    </div>
-
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
 
     <!-- Main Container -->
     <div class="dashboard-container">
         <!-- Header Card -->
         <div class="header-card">
             <div class="welcome-section">
-                <div class="avatar" id="avatar">MA</div>
+                <div class="avatar" id="userAvatar">👤</div>
                 <div class="welcome-text">
-                    <h1 id="alumnoNombre">Cargando...</h1>
+                    <h1 id="userName">Cargando...</h1>
                     <p>
-                        <i class="fas fa-id-card"></i>
-                        <span id="alumnoMatricula">...</span>
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="currentDate">--</span>
                     </p>
                 </div>
             </div>
             <div class="badge-device">
-                <i class="fas fa-check-circle"></i>
-                <span id="deviceStatus">Dispositivo verificado</span>
+                <i class="fas fa-mobile-alt"></i>
+                <span id="deviceId">Validando...</span>
             </div>
         </div>
 
-        <!-- Stats Cards -->
+        <!-- Stats Grid -->
         <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-value" id="statTotal">0</div>
+                <div class="stat-label">Total</div>
+            </div>
             <div class="stat-card present">
                 <div class="stat-icon">
-                    <i class="fas fa-check-circle"></i>
+                    <i class="fas fa-check"></i>
                 </div>
-                <div class="stat-value" id="asistencias">0</div>
+                <div class="stat-value" id="statPresent">0</div>
                 <div class="stat-label">Asistencias</div>
-            </div>
-            <div class="stat-card absent">
-                <div class="stat-icon">
-                    <i class="fas fa-times-circle"></i>
-                </div>
-                <div class="stat-value" id="faltas">0</div>
-                <div class="stat-label">Faltas</div>
             </div>
             <div class="stat-card percentage">
                 <div class="stat-icon">
                     <i class="fas fa-chart-line"></i>
                 </div>
-                <div class="stat-value" id="porcentaje">0%</div>
-                <div class="stat-label">Asistencia</div>
+                <div class="stat-value" id="statPercentage">0%</div>
+                <div class="stat-label">Porcentaje</div>
             </div>
         </div>
 
-        <!-- Progress Card -->
-        <div class="progress-card">
-            <div class="progress-header">
-                <h3>
-                    <i class="fas fa-calendar-check"></i>
-                    Progreso del Semestre
-                </h3>
-                <span class="progress-percentage" id="progressPercentage">0%</span>
-            </div>
-            
-            <div class="progress-bar-container">
-                <div class="progress-bar green" id="progressBar" style="width: 0%;"></div>
-            </div>
-            
-            <div class="progress-stats">
-                <span><i class="fas fa-check-circle" style="color: var(--success);"></i> <span id="clasesAsistidas">0</span> clases</span>
-                <span><i class="fas fa-times-circle" style="color: var(--danger);"></i> <span id="clasesFaltadas">0</span> faltas</span>
-                <span><i class="fas fa-clock" style="color: var(--warning);"></i> <span id="totalClases">0</span> total</span>
-            </div>
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="action-btn primary" onclick="abrirScanner()">
+                <i class="fas fa-qrcode"></i>
+                <span>Escanear QR</span>
+            </button>
+            <button class="action-btn" onclick="cerrarSesion()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Cerrar Sesión</span>
+            </button>
         </div>
 
-        <!-- QR Scanner Button -->
-        <button class="scanner-card" onclick="abrirScanner()">
-            <div class="scanner-content">
-                <div class="scanner-icon">
-                    <i class="fas fa-qrcode"></i>
-                </div>
-                <div class="scanner-text">
-                    <h3>Escanear QR de Clase</h3>
-                    <p>Toca aquí para registrar tu asistencia</p>
-                </div>
-                <div class="scanner-arrow">
-                    <i class="fas fa-arrow-right"></i>
-                </div>
-            </div>
-        </button>
-
-        <!-- Semáforo de Riesgo -->
-        <div class="semaforo-grid">
-            <div class="semaforo-item">
-                <div class="semaforo-dot verde"></div>
-                <div class="semaforo-info">
-                    <h4>Excelente</h4>
-                    <p>>80% asistencia</p>
-                </div>
-            </div>
-            
-            <div class="semaforo-item">
-                <div class="semaforo-dot amarillo"></div>
-                <div class="semaforo-info">
-                    <h4>¡Cuidado!</h4>
-                    <p>50-80% asistencia</p>
-                </div>
-            </div>
-            
-            <div class="semaforo-item">
-                <div class="semaforo-dot naranja"></div>
-                <div class="semaforo-info">
-                    <h4>Sin ordinario</h4>
-                    <p>30-50% asistencia</p>
-                </div>
-            </div>
-            
-            <div class="semaforo-item">
-                <div class="semaforo-dot rojo"></div>
-                <div class="semaforo-info">
-                    <h4>Sin extraordinario</h4>
-                    <p>&lt;30% asistencia</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Activity -->
-        <div class="activity-card">
-            <div class="activity-header">
-                <h3>
+        <!-- Activity Section -->
+        <div class="activity-section">
+            <div class="section-header">
+                <div class="section-title">
                     <i class="fas fa-history"></i>
                     Actividad Reciente
-                </h3>
+                </div>
+                <button class="refresh-btn" onclick="cargarActividadReciente()">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
             </div>
-            
             <div class="activity-list" id="activityList">
-                <div class="activity-item">
-                    <div class="activity-icon warning">
-                        <i class="fas fa-info-circle"></i>
-                    </div>
-                    <div class="activity-details">
-                        <div class="activity-title">Cargando actividad...</div>
-                        <div class="activity-time">Un momento</div>
-                    </div>
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Cargando actividad...</p>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Quick Actions -->
-        <div class="actions-grid">
-            <a href="/historial" class="action-btn">
-                <i class="fas fa-calendar-alt"></i>
-                <span>Mi Historial</span>
-            </a>
-            <a href="/justificantes" class="action-btn">
-                <i class="fas fa-file-medical"></i>
-                <span>Justificantes</span>
-            </a>
-            <a href="/horario" class="action-btn">
-                <i class="fas fa-clock"></i>
-                <span>Mi Horario</span>
-            </a>
-            <button class="action-btn" onclick="cerrarSesion()">
-                <i class="fas fa-sign-out-alt" style="color: var(--danger);"></i>
-                <span>Salir</span>
+    <!-- Scanner Modal -->
+    <div id="scannerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fas fa-qrcode"></i>
+                    Escanear Código QR
+                </div>
+                <button class="close-btn" onclick="cerrarScanner()">×</button>
+            </div>
+            <div id="reader"></div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="success-modal">
+        <div class="success-content">
+            <div class="success-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="success-title">¡Asistencia Registrada!</div>
+            <div class="success-message">Tu asistencia ha sido registrada exitosamente</div>
+            <div class="success-details" id="successDetails">
+                <!-- Se llenará dinámicamente -->
+            </div>
+            <button class="action-btn primary" onclick="cerrarSuccessModal()" style="width: 100%;">
+                <i class="fas fa-check"></i>
+                Entendido
             </button>
         </div>
     </div>
 
-    <!-- Modal Scanner -->
-    <div class="modal" id="scannerModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>
-                    <i class="fas fa-qrcode" style="color: var(--primary);"></i>
-                    Escanear QR
-                </h2>
-                <button class="modal-close" onclick="cerrarScanner()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div id="reader"></div>
-                <p class="scan-instruction">
-                    <i class="fas fa-camera"></i>
-                    Coloca el código QR dentro del marco
-                </p>
-            </div>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>Procesando...</p>
         </div>
     </div>
 
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
     <!-- Scripts -->
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <script>
         // ===== VARIABLES GLOBALES =====
-        let usuarioActual = null;
         let html5QrCode = null;
         let scannerActivo = false;
         let intervaloActualizacion = null;
+        let usuarioId = null; // CORREGIDO: Ahora usamos usuario_id
 
         // ===== INICIALIZACIÓN =====
         document.addEventListener('DOMContentLoaded', function() {
-            if (!verificarSesion()) return;
+            console.log("🚀 Iniciando dashboard alumno...");
+            
+            // Verificar autenticación
+            const telefonoId = localStorage.getItem('telefono_id');
+            const userIdStorage = localStorage.getItem('usuario_id'); // CORREGIDO
+            
+            console.log("📱 Teléfono ID:", telefonoId);
+            console.log("👤 Usuario ID:", userIdStorage);
+            
+            if (!telefonoId || !userIdStorage) {
+                console.error("❌ No hay sesión válida");
+                window.location.href = '/';
+                return;
+            }
+            
+            usuarioId = userIdStorage; // CORREGIDO
+            
+            // Cargar datos iniciales
             cargarDatosUsuario();
             cargarEstadisticasReales();
             cargarActividadReciente();
+            actualizarFecha();
             
-            // Actualizar datos cada 30 segundos
+            // Actualizar cada 30 segundos
             intervaloActualizacion = setInterval(() => {
-                if (usuarioActual && usuarioActual.id) {
-                    cargarEstadisticasReales();
-                    cargarActividadReciente();
-                }
+                cargarEstadisticasReales();
+                cargarActividadReciente();
             }, 30000);
         });
 
-        // ===== VERIFICAR SESIÓN =====
-        function verificarSesion() {
-            const telefonoId = localStorage.getItem('telefono_id');
-            const userData = localStorage.getItem('user_data');
-            
-            if (!telefonoId || !userData) {
-                window.location.href = '/';
-                return false;
-            }
-            
+        // ===== CARGA DE DATOS =====
+        async function cargarDatosUsuario() {
             try {
-                usuarioActual = JSON.parse(userData);
-                document.getElementById('deviceStatus').textContent = 'Dispositivo: ' + telefonoId.substring(0, 15) + '...';
-                return true;
-            } catch (e) {
-                cerrarSesion();
-                return false;
-            }
-        }
-
-        // ===== CARGAR DATOS BÁSICOS =====
-        function cargarDatosUsuario() {
-            if (!usuarioActual) return;
-            
-            document.getElementById('alumnoNombre').textContent = usuarioActual.nombre || 'Usuario';
-            document.getElementById('alumnoMatricula').textContent = usuarioActual.matricula || 'Sin matrícula';
-            
-            const iniciales = usuarioActual.nombre ? 
-                usuarioActual.nombre.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 
-                'U';
-            document.getElementById('avatar').textContent = iniciales;
-        }
-
-        // ===== CARGAR ESTADÍSTICAS REALES =====
-        async function cargarEstadisticasReales() {
-            if (!usuarioActual || !usuarioActual.id) {
-                usarDatosFallback();
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/api/alumno/${usuarioActual.id}/estadisticas`);
-                const data = await response.json();
+                const response = await fetch('/api/usuario-info', {
+                    headers: {
+                        'telefono-id': localStorage.getItem('telefono_id')
+                    }
+                });
                 
-                if (data.success) {
-                    actualizarEstadisticas(data.estadisticas);
-                } else {
-                    usarDatosFallback();
+                if (!response.ok) throw new Error('Error al cargar datos');
+                
+                const data = await response.json();
+                console.log("Usuario data:", data);
+                
+                if (data.nombre) {
+                    document.getElementById('userName').textContent = data.nombre;
+                    const iniciales = data.nombre.split(' ')
+                        .map(n => n[0])
+                        .join('')
+                        .substring(0, 2)
+                        .toUpperCase();
+                    document.getElementById('userAvatar').textContent = iniciales;
                 }
+                
+                const deviceId = localStorage.getItem('telefono_id').substring(0, 8);
+                document.getElementById('deviceId').textContent = `ID: ${deviceId}`;
+                
+            } catch (error) {
+                console.error('Error cargando usuario:', error);
+                document.getElementById('userName').textContent = 'Alumno';
+            }
+        }
+
+        async function cargarEstadisticasReales() {
+            try {
+                const response = await fetch('/api/estadisticas-alumno', {
+                    headers: {
+                        'telefono-id': localStorage.getItem('telefono_id')
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Error al cargar estadísticas');
+                
+                const data = await response.json();
+                console.log("Estadísticas:", data);
+                
+                document.getElementById('statTotal').textContent = data.total_clases || 0;
+                document.getElementById('statPresent').textContent = data.asistencias || 0;
+                
+                const porcentaje = data.total_clases > 0 
+                    ? Math.round((data.asistencias / data.total_clases) * 100)
+                    : 0;
+                document.getElementById('statPercentage').textContent = porcentaje + '%';
+                
             } catch (error) {
                 console.error('Error cargando estadísticas:', error);
-                usarDatosFallback();
             }
         }
 
-        function actualizarEstadisticas(estadisticas) {
-            const asistencias = estadisticas.asistencias || 0;
-            const faltas = estadisticas.faltas || 0;
-            const totalClases = asistencias + faltas;
-            const porcentaje = totalClases > 0 ? Math.round((asistencias / totalClases) * 100) : 0;
-            
-            document.getElementById('asistencias').textContent = asistencias;
-            document.getElementById('faltas').textContent = faltas;
-            document.getElementById('porcentaje').textContent = porcentaje + '%';
-            document.getElementById('progressPercentage').textContent = porcentaje + '%';
-            document.getElementById('progressBar').style.width = porcentaje + '%';
-            document.getElementById('clasesAsistidas').textContent = asistencias;
-            document.getElementById('clasesFaltadas').textContent = faltas;
-            document.getElementById('totalClases').textContent = totalClases;
-            
-            const progressBar = document.getElementById('progressBar');
-            if (porcentaje >= 80) progressBar.className = 'progress-bar green';
-            else if (porcentaje >= 50) progressBar.className = 'progress-bar yellow';
-            else if (porcentaje >= 30) progressBar.className = 'progress-bar orange';
-            else progressBar.className = 'progress-bar red';
-        }
-
-        function usarDatosFallback() {
-            const estadisticas = { asistencias: 0, faltas: 0 };
-            actualizarEstadisticas(estadisticas);
-        }
-
-        // ===== CARGAR ACTIVIDAD =====
         async function cargarActividadReciente() {
-            if (!usuarioActual || !usuarioActual.id) return;
-            
             try {
-                const response = await fetch(`/api/alumno/${usuarioActual.id}/actividad`);
+                const response = await fetch('/api/actividad-alumno', {
+                    headers: {
+                        'telefono-id': localStorage.getItem('telefono_id')
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Error al cargar actividad');
+                
                 const data = await response.json();
-                if (data.success && data.actividades) {
-                    mostrarActividadReciente(data.actividades);
-                } else {
-                    mostrarActividadVacia();
+                console.log("Actividad:", data);
+                
+                const lista = document.getElementById('activityList');
+                
+                if (!data.actividades || data.actividades.length === 0) {
+                    lista.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>No hay actividad reciente</p>
+                        </div>
+                    `;
+                    return;
                 }
+                
+                lista.innerHTML = data.actividades.map(act => {
+                    const icon = act.estado === 'Presente' ? 'check' : 'times';
+                    const clase = act.estado === 'Presente' ? 'present' : 'absent';
+                    const fecha = new Date(act.fecha).toLocaleDateString('es-MX', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    return `
+                        <div class="activity-item">
+                            <div class="activity-icon ${clase}">
+                                <i class="fas fa-${icon}"></i>
+                            </div>
+                            <div class="activity-info">
+                                <div class="activity-title">${act.materia || 'Clase'}</div>
+                                <div class="activity-meta">${fecha} · ${act.estado}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
             } catch (error) {
                 console.error('Error cargando actividad:', error);
-                mostrarActividadVacia();
-            }
-        }
-
-        function mostrarActividadReciente(actividades) {
-            const activityList = document.getElementById('activityList');
-            
-            if (!actividades || actividades.length === 0) {
-                mostrarActividadVacia();
-                return;
-            }
-            
-            activityList.innerHTML = '';
-            actividades.slice(0, 5).forEach(act => {
-                const item = document.createElement('div');
-                item.className = 'activity-item';
-                
-                const esAsistencia = act.tipo === 'asistencia';
-                const icono = esAsistencia ? 'fa-check' : 'fa-file-medical';
-                const color = esAsistencia ? 'success' : 'warning';
-                const titulo = esAsistencia ? 'Asistencia registrada' : 'Falta justificada';
-                
-                item.innerHTML = `
-                    <div class="activity-icon ${color}">
-                        <i class="fas ${icono}"></i>
-                    </div>
-                    <div class="activity-details">
-                        <div class="activity-title">${titulo}</div>
-                        <div class="activity-time"><i class="far fa-clock"></i> ${act.fecha}</div>
+                document.getElementById('activityList').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Error al cargar actividad</p>
                     </div>
                 `;
-                activityList.appendChild(item);
-            });
+            }
         }
 
-        function mostrarActividadVacia() {
-            document.getElementById('activityList').innerHTML = `
-                <div class="activity-item">
-                    <div class="activity-icon warning">
-                        <i class="fas fa-info-circle"></i>
-                    </div>
-                    <div class="activity-details">
-                        <div class="activity-title">Sin actividad reciente</div>
-                        <div class="activity-time">Escanea un QR para comenzar</div>
-                    </div>
-                </div>
-            `;
+        function actualizarFecha() {
+            const opciones = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            const fecha = new Date().toLocaleDateString('es-MX', opciones);
+            document.getElementById('currentDate').textContent = 
+                fecha.charAt(0).toUpperCase() + fecha.slice(1);
         }
 
         // ===== SCANNER QR =====
         async function abrirScanner() {
+            console.log("📷 Abriendo scanner...");
+            
             const modal = document.getElementById('scannerModal');
-            const readerDiv = document.getElementById('reader');
-            
             modal.classList.add('active');
-            readerDiv.innerHTML = '<div class="camera-loading"><div class="spinner"></div><p>Iniciando cámara...</p></div>';
-            
-            // Esperar un momento para que el modal se renderice
-            await new Promise(resolve => setTimeout(resolve, 300));
             
             try {
                 await iniciarScanner();
             } catch (error) {
-                console.error('Error al abrir scanner:', error);
+                console.error("Error al iniciar scanner:", error);
                 mostrarErrorCamara();
             }
         }
 
         async function iniciarScanner() {
-            if (scannerActivo) return;
-            
-            const readerDiv = document.getElementById('reader');
-            readerDiv.innerHTML = ''; // Limpiar contenido
-            
             try {
+                if (html5QrCode) {
+                    await html5QrCode.stop();
+                    html5QrCode.clear();
+                    html5QrCode = null;
+                }
+                
                 html5QrCode = new Html5Qrcode("reader");
                 
                 const config = {
                     fps: 10,
                     qrbox: { width: 250, height: 250 },
-                    aspectRatio: 1.0
+                    aspectRatio: 1.0,
+                    disableFlip: false
                 };
                 
-                // Intentar obtener cámaras disponibles
                 try {
                     const devices = await Html5Qrcode.getCameras();
                     
                     if (!devices || devices.length === 0) {
-                        throw new Error('No se encontraron cámaras');
+                        throw new Error("No se encontraron cámaras");
                     }
                     
-                    // Buscar cámara trasera
+                    console.log("Cámaras disponibles:", devices);
+                    
                     let cameraId = devices[0].id;
                     const backCamera = devices.find(device => 
                         device.label.toLowerCase().includes('back') || 
@@ -1255,7 +1085,6 @@
                     
                 } catch (cameraError) {
                     console.log("Error con cámaras específicas, intentando con facingMode");
-                    // Fallback a facingMode
                     await html5QrCode.start(
                         { facingMode: "environment" },
                         config,
@@ -1284,7 +1113,7 @@
         }
 
         function onScanSuccess(decodedText, decodedResult) {
-            console.log("QR escaneado:", decodedText);
+            console.log("✅ QR escaneado:", decodedText);
             
             // Vibrar si es posible
             if (navigator.vibrate) {
@@ -1299,9 +1128,9 @@
         }
 
         function onScanError(errorMessage) {
-            // Ignorar errores normales de escaneo (son muy frecuentes)
-            if (errorMessage && errorMessage.includes('NotFoundException')) {
-                console.log('Escaneando...');
+            // Ignorar errores normales de escaneo
+            if (errorMessage && !errorMessage.includes('NotFoundException')) {
+                console.log('Error escaneo:', errorMessage);
             }
         }
 
@@ -1326,6 +1155,7 @@
             document.getElementById('reader').innerHTML = '';
         }
 
+        // ===== PROCESAR ASISTENCIA =====
         async function procesarQR(textoQR) {
             cerrarScanner();
             mostrarLoading(true);
@@ -1356,48 +1186,107 @@
                     
                     latitud = position.coords.latitude;
                     longitud = position.coords.longitude;
-                    console.log("Ubicación obtenida:", latitud, longitud);
+                    console.log("📍 Ubicación obtenida:", latitud, longitud);
                     
                 } catch (geoError) {
-                    console.log("Ubicación no disponible:", geoError.message);
+                    console.log("⚠️ Ubicación no disponible:", geoError.message);
                 }
                 
-                console.log("Enviando asistencia...", {
+                console.log("📤 Enviando asistencia...", {
                     qr_data: textoQR,
                     telefono_id: localStorage.getItem('telefono_id'),
+                    usuario_id: usuarioId, // CORREGIDO
                     latitud: latitud,
                     longitud: longitud
                 });
                 
+                // CORREGIDO: Ahora enviamos usuario_id
                 const response = await fetch('/api/registrar-asistencia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         qr_data: textoQR,
                         telefono_id: localStorage.getItem('telefono_id'),
+                        usuario_id: usuarioId, // CORREGIDO: Usamos usuario_id
                         latitud: latitud,
                         longitud: longitud
                     })
                 });
                 
                 const data = await response.json();
-                console.log("Respuesta:", data);
+                console.log("📨 Respuesta del servidor:", data);
+                
+                mostrarLoading(false);
                 
                 if (data.success) {
-                    mostrarToast('✅ Asistencia registrada correctamente', 'success');
-                    // Recargar datos inmediatamente
-                    await cargarEstadisticasReales();
-                    await cargarActividadReciente();
+                    // Mostrar modal de éxito con detalles
+                    mostrarSuccessModal(data);
+                    
+                    // Recargar datos después de un momento
+                    setTimeout(async () => {
+                        await cargarEstadisticasReales();
+                        await cargarActividadReciente();
+                    }, 1000);
+                    
                 } else {
-                    mostrarToast('❌ ' + (data.message || 'Error al registrar'), 'error');
+                    mostrarToast('❌ ' + (data.message || 'Error al registrar asistencia'), 'error');
                 }
                 
             } catch (error) {
-                console.error('Error en procesarQR:', error);
-                mostrarToast('❌ Error al registrar asistencia', 'error');
-            } finally {
+                console.error('❌ Error en procesarQR:', error);
                 mostrarLoading(false);
+                mostrarToast('❌ Error de conexión al registrar asistencia', 'error');
             }
+        }
+
+        // ===== SUCCESS MODAL =====
+        function mostrarSuccessModal(data) {
+            const modal = document.getElementById('successModal');
+            const details = document.getElementById('successDetails');
+            
+            const ahora = new Date();
+            const fecha = ahora.toLocaleDateString('es-MX', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const hora = ahora.toLocaleTimeString('es-MX', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            details.innerHTML = `
+                <div class="success-detail-row">
+                    <span class="success-detail-label">📚 Materia</span>
+                    <span class="success-detail-value">${data.materia || 'Clase'}</span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="success-detail-label">📅 Fecha</span>
+                    <span class="success-detail-value">${fecha}</span>
+                </div>
+                <div class="success-detail-row">
+                    <span class="success-detail-label">🕐 Hora</span>
+                    <span class="success-detail-value">${hora}</span>
+                </div>
+                ${data.profesor ? `
+                <div class="success-detail-row">
+                    <span class="success-detail-label">👨‍🏫 Profesor</span>
+                    <span class="success-detail-value">${data.profesor}</span>
+                </div>
+                ` : ''}
+            `;
+            
+            modal.classList.add('active');
+            
+            // Vibración de éxito
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]);
+            }
+        }
+
+        function cerrarSuccessModal() {
+            document.getElementById('successModal').classList.remove('active');
         }
 
         // ===== UTILERÍAS =====
@@ -1422,12 +1311,12 @@
             
             container.appendChild(toast);
             
-            // Auto eliminar después de 4 segundos
+            // Auto eliminar después de 5 segundos
             setTimeout(() => {
                 if (toast.parentElement) {
                     toast.remove();
                 }
-            }, 4000);
+            }, 5000);
         }
 
         function cerrarSesion() {
@@ -1441,15 +1330,18 @@
         }
 
         // ===== EVENTOS =====
-        // Cerrar modal al hacer clic fuera
         window.onclick = function(event) {
-            const modal = document.getElementById('scannerModal');
-            if (event.target === modal) {
+            const scannerModal = document.getElementById('scannerModal');
+            const successModal = document.getElementById('successModal');
+            
+            if (event.target === scannerModal) {
                 cerrarScanner();
+            }
+            if (event.target === successModal) {
+                cerrarSuccessModal();
             }
         }
 
-        // Limpiar al salir de la página
         window.addEventListener('beforeunload', function() {
             if (scannerActivo) {
                 detenerScanner();
@@ -1459,7 +1351,6 @@
             }
         });
 
-        // Pausar scanner cuando se oculta la página
         document.addEventListener('visibilitychange', function() {
             if (document.hidden && scannerActivo) {
                 detenerScanner();
