@@ -723,3 +723,44 @@ def handler(request, **kwargs):
     except Exception as e:
         return (json.dumps({'error': str(e)}), 500, {'Content-Type': 'application/json', **headers})
 
+def handler(request, **kwargs):
+    headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+    }
+    
+    if request.method == 'OPTIONS':
+        return ('', 204, headers)
+    
+    path = request.path
+    method = request.method
+    
+    try:
+        # ===== RUTAS API =====
+        if path == '/api/register' and method == 'POST':
+            response, status = handler_register(request)
+            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+        
+        elif path == '/api/login' and method == 'POST':
+            response, status = handler_login(request)
+            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+        
+        # ... otras rutas ...
+        
+        # 👇 NUEVA RUTA PARA ASISTENCIAS DE CLASE
+        elif path.startswith('/api/clase/') and method == 'GET':
+            parts = path.split('/')
+            if len(parts) == 4 and parts[3] == 'asistencias':
+                try:
+                    clase_id = int(parts[2])
+                    response, status = handler_asistencias_clase(request, clase_id)
+                    return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+                except ValueError:
+                    return (json.dumps({'error': 'Invalid clase_id'}), 400, {'Content-Type': 'application/json', **headers})
+        
+        # 404
+        return (json.dumps({'error': 'Not found'}), 404, {'Content-Type': 'application/json', **headers})
+        
+    except Exception as e:
+        return (json.dumps({'error': str(e)}), 500, {'Content-Type': 'application/json', **headers})

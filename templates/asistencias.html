@@ -1376,7 +1376,7 @@
                 CLASE_ACTIVA: '/api/clase/activa',
                 INICIAR_CLASE: '/api/clase/iniciar',
                 TERMINAR_CLASE: '/api/clase/terminar',
-                ASISTENCIAS: '/api/asistencias',
+                ASISTENCIAS: '/api/clase',
                 JUSTIFICAR: '/api/asistencia/justificar'
             },
             UPDATE_INTERVAL: 10000, // 10 segundos
@@ -1587,11 +1587,10 @@
             },
 
             async getAsistencias() {
-                const params = new URLSearchParams({
-                    clase_id: AppState.claseActiva?.id || '',
-                    timestamp: Date.now()
-                });
-                return this.request(`${CONFIG.API_ENDPOINTS.ASISTENCIAS}?${params}`);
+                if (!AppState.claseActiva?.id) {
+                    throw new Error('No hay clase activa');
+                }
+                return this.request(`${CONFIG.API_ENDPOINTS.ASISTENCIAS}/${AppState.claseActiva.id}/asistencias?timestamp=${Date.now()}`);
             },
 
             async justificarFalta(data) {
