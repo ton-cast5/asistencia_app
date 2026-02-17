@@ -1211,7 +1211,7 @@
                     <td>${alumno.matricula}</td>
                     <td><strong>${alumno.nombre}</strong></td>
                     <td>${alumno.asistencias}</td>
-                    <td>${0 - alumno.asistencias}</td>
+                    <td>${alumno.faltas || 0}</td>
                     <td>${alumno.porcentaje}%</td>
                     <td><span class="badge ${badgeClass}">${estadoTexto}</span></td>
                 `;
