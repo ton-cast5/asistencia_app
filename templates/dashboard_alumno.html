@@ -1,9 +1,9 @@
-<!-- templates/dashboard_alumno.html - VERSIÓN CORREGIDA -->
+<!-- templates/dashboard_alumno.html - VERSIÓN COMPLETA CON SCANNER FUNCIONAL -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Mi Asistencia · Alumno</title>
     
     <!-- Fonts & Icons -->
@@ -66,11 +66,6 @@
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes shimmer {
-            0% { background-position: -1000px 0; }
-            100% { background-position: 1000px 0; }
         }
 
         @keyframes spin {
@@ -862,7 +857,7 @@
             </div>
             <div class="badge-device">
                 <i class="fas fa-check-circle"></i>
-                <span>Dispositivo verificado</span>
+                <span id="deviceStatus">Dispositivo verificado</span>
             </div>
         </div>
 
@@ -1033,6 +1028,7 @@
         let usuarioActual = null;
         let html5QrCode = null;
         let scannerActivo = false;
+        let intervaloActualizacion = null;
 
         // ===== INICIALIZACIÓN =====
         document.addEventListener('DOMContentLoaded', function() {
@@ -1040,6 +1036,14 @@
             cargarDatosUsuario();
             cargarEstadisticasReales();
             cargarActividadReciente();
+            
+            // Actualizar datos cada 30 segundos
+            intervaloActualizacion = setInterval(() => {
+                if (usuarioActual && usuarioActual.id) {
+                    cargarEstadisticasReales();
+                    cargarActividadReciente();
+                }
+            }, 30000);
         });
 
         // ===== VERIFICAR SESIÓN =====
@@ -1054,6 +1058,7 @@
             
             try {
                 usuarioActual = JSON.parse(userData);
+                document.getElementById('deviceStatus').textContent = 'Dispositivo: ' + telefonoId.substring(0, 15) + '...';
                 return true;
             } catch (e) {
                 cerrarSesion();
@@ -1091,7 +1096,7 @@
                     usarDatosFallback();
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error cargando estadísticas:', error);
                 usarDatosFallback();
             }
         }
@@ -1136,7 +1141,7 @@
                     mostrarActividadVacia();
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error cargando actividad:', error);
                 mostrarActividadVacia();
             }
         }
@@ -1155,12 +1160,16 @@
                 item.className = 'activity-item';
                 
                 const esAsistencia = act.tipo === 'asistencia';
+                const icono = esAsistencia ? 'fa-check' : 'fa-file-medical';
+                const color = esAsistencia ? 'success' : 'warning';
+                const titulo = esAsistencia ? 'Asistencia registrada' : 'Falta justificada';
+                
                 item.innerHTML = `
-                    <div class="activity-icon ${esAsistencia ? 'success' : 'warning'}">
-                        <i class="fas ${esAsistencia ? 'fa-check' : 'fa-file-medical'}"></i>
+                    <div class="activity-icon ${color}">
+                        <i class="fas ${icono}"></i>
                     </div>
                     <div class="activity-details">
-                        <div class="activity-title">${esAsistencia ? 'Asistencia registrada' : 'Falta justificada'}</div>
+                        <div class="activity-title">${titulo}</div>
                         <div class="activity-time"><i class="far fa-clock"></i> ${act.fecha}</div>
                     </div>
                 `;
@@ -1213,53 +1222,53 @@
                 const config = {
                     fps: 10,
                     qrbox: { width: 250, height: 250 },
-                    aspectRatio: 1.0,
-                    formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
+                    aspectRatio: 1.0
                 };
                 
                 // Intentar obtener cámaras disponibles
-                const devices = await Html5Qrcode.getCameras();
-                
-                if (!devices || devices.length === 0) {
-                    throw new Error('No se encontraron cámaras');
+                try {
+                    const devices = await Html5Qrcode.getCameras();
+                    
+                    if (!devices || devices.length === 0) {
+                        throw new Error('No se encontraron cámaras');
+                    }
+                    
+                    // Buscar cámara trasera
+                    let cameraId = devices[0].id;
+                    const backCamera = devices.find(device => 
+                        device.label.toLowerCase().includes('back') || 
+                        device.label.toLowerCase().includes('rear') ||
+                        device.label.toLowerCase().includes('environment') ||
+                        device.label.toLowerCase().includes('trasera')
+                    );
+                    
+                    if (backCamera) {
+                        cameraId = backCamera.id;
+                    }
+                    
+                    await html5QrCode.start(
+                        cameraId,
+                        config,
+                        onScanSuccess,
+                        onScanError
+                    );
+                    
+                } catch (cameraError) {
+                    console.log("Error con cámaras específicas, intentando con facingMode");
+                    // Fallback a facingMode
+                    await html5QrCode.start(
+                        { facingMode: "environment" },
+                        config,
+                        onScanSuccess,
+                        onScanError
+                    );
                 }
-                
-                // Buscar cámara trasera
-                let cameraId = devices[0].id;
-                const backCamera = devices.find(device => 
-                    device.label.toLowerCase().includes('back') || 
-                    device.label.toLowerCase().includes('rear') ||
-                    device.label.toLowerCase().includes('trasera')
-                );
-                
-                if (backCamera) {
-                    cameraId = backCamera.id;
-                }
-                
-                await html5QrCode.start(
-                    cameraId,
-                    config,
-                    onScanSuccess,
-                    onScanError
-                );
                 
                 scannerActivo = true;
                 
             } catch (error) {
                 console.error("Error iniciando scanner:", error);
-                
-                // Intentar con configuración alternativa
-                try {
-                    await html5QrCode.start(
-                        { facingMode: "environment" },
-                        { fps: 10, qrbox: 250 },
-                        onScanSuccess,
-                        onScanError
-                    );
-                    scannerActivo = true;
-                } catch (err2) {
-                    throw new Error('No se pudo acceder a la cámara');
-                }
+                throw error;
             }
         }
 
@@ -1269,11 +1278,14 @@
                     <i class="fas fa-exclamation-triangle"></i>
                     <p><strong>No se pudo acceder a la cámara</strong></p>
                     <p style="font-size: 12px;">Verifica los permisos del navegador</p>
+                    <button class="action-btn" style="margin-top: 10px;" onclick="cerrarScanner()">Cerrar</button>
                 </div>
             `;
         }
 
-        function onScanSuccess(decodedText) {
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log("QR escaneado:", decodedText);
+            
             // Vibrar si es posible
             if (navigator.vibrate) {
                 navigator.vibrate(200);
@@ -1287,10 +1299,9 @@
         }
 
         function onScanError(errorMessage) {
-            // Ignorar errores normales de escaneo
-            // Solo loguear errores críticos
-            if (errorMessage.includes('NotFound') || errorMessage.includes('NotAllowed')) {
-                console.error('Error crítico de cámara:', errorMessage);
+            // Ignorar errores normales de escaneo (son muy frecuentes)
+            if (errorMessage && errorMessage.includes('NotFoundException')) {
+                console.log('Escaneando...');
             }
         }
 
@@ -1345,9 +1356,18 @@
                     
                     latitud = position.coords.latitude;
                     longitud = position.coords.longitude;
+                    console.log("Ubicación obtenida:", latitud, longitud);
+                    
                 } catch (geoError) {
                     console.log("Ubicación no disponible:", geoError.message);
                 }
+                
+                console.log("Enviando asistencia...", {
+                    qr_data: textoQR,
+                    telefono_id: localStorage.getItem('telefono_id'),
+                    latitud: latitud,
+                    longitud: longitud
+                });
                 
                 const response = await fetch('/api/registrar-asistencia', {
                     method: 'POST',
@@ -1361,9 +1381,11 @@
                 });
                 
                 const data = await response.json();
+                console.log("Respuesta:", data);
                 
                 if (data.success) {
                     mostrarToast('✅ Asistencia registrada correctamente', 'success');
+                    // Recargar datos inmediatamente
                     await cargarEstadisticasReales();
                     await cargarActividadReciente();
                 } else {
@@ -1371,7 +1393,7 @@
                 }
                 
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error en procesarQR:', error);
                 mostrarToast('❌ Error al registrar asistencia', 'error');
             } finally {
                 mostrarLoading(false);
@@ -1399,6 +1421,8 @@
             `;
             
             container.appendChild(toast);
+            
+            // Auto eliminar después de 4 segundos
             setTimeout(() => {
                 if (toast.parentElement) {
                     toast.remove();
@@ -1408,6 +1432,9 @@
 
         function cerrarSesion() {
             if (confirm('¿Cerrar sesión?')) {
+                if (intervaloActualizacion) {
+                    clearInterval(intervaloActualizacion);
+                }
                 localStorage.clear();
                 window.location.href = '/';
             }
@@ -1426,6 +1453,9 @@
         window.addEventListener('beforeunload', function() {
             if (scannerActivo) {
                 detenerScanner();
+            }
+            if (intervaloActualizacion) {
+                clearInterval(intervaloActualizacion);
             }
         });
 
