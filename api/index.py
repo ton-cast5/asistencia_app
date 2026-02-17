@@ -370,39 +370,56 @@ def handler_terminar_clase(request):
     except Exception as e:
         return {'success': False, 'message': str(e)}, 500
 
-# ===== NUEVO ENDPOINT PARA REGISTRAR ASISTENCIA =====
+# ===== REEMPLAZA ESTA FUNCIÓN EN TU index.py =====
+# Busca la función handler_registrar_asistencia y reemplázala con esta versión:
+
 def handler_registrar_asistencia(request):
     """POST /api/registrar-asistencia"""
     try:
         data = request.get_json()
         qr_data = data.get('qr_data')
         telefono_id = data.get('telefono_id')
+        usuario_id = data.get('usuario_id')  # ✅ NUEVO: recibir usuario_id
         latitud = data.get('latitud')
         longitud = data.get('longitud')
         
-        if not qr_data or not telefono_id:
+        print(f"📥 Datos recibidos: qr={qr_data}, usuario_id={usuario_id}, tel={telefono_id}")
+        
+        # Validar datos requeridos
+        if not qr_data or not telefono_id or not usuario_id:
             return {'success': False, 'message': 'Datos incompletos'}, 400
         
         db = get_db()
         
-        # 1. Identificar al alumno por telefono_id
+        # 1. Verificar que el usuario_id corresponda al telefono_id (seguridad)
         alumno = db.query('usuarios', params={
+            'id': f'eq.{usuario_id}',
             'telefono_id': f'eq.{telefono_id}',
             'rol': 'eq.alumno'
         })
         
         if not alumno or len(alumno) == 0:
-            return {'success': False, 'message': 'Alumno no encontrado'}, 404
+            return {'success': False, 'message': 'Usuario no válido o no coincide con el dispositivo'}, 403
         
-        alumno_id = alumno[0]['id']
+        alumno_id = alumno[0]['id']  # Este es el id de la tabla usuarios
+        alumno_nombre = alumno[0]['nombre']
         
-        # 2. Decodificar QR (puede ser JSON o texto plano)
+        print(f"✅ Usuario validado: {alumno_nombre} (ID: {alumno_id})")
+        
+        # 2. Decodificar QR para obtener clase_id
         try:
+            # Intentar parsear como JSON
             qr_info = json.loads(qr_data)
             clase_id = qr_info.get('clase_id')
         except:
-            # Si no es JSON, asumimos que es solo el ID
-            clase_id = qr_data
+            # Si no es JSON, extraer del formato "clase_123"
+            if isinstance(qr_data, str) and qr_data.startswith('clase_'):
+                clase_id = int(qr_data.split('_')[1])
+            else:
+                # Si es solo el número
+                clase_id = int(qr_data)
+        
+        print(f"🎓 Clase ID extraído: {clase_id}")
         
         # 3. Verificar que la clase existe y está activa
         clase = db.query('clases', params={
@@ -411,9 +428,10 @@ def handler_registrar_asistencia(request):
         })
         
         if not clase or len(clase) == 0:
-            return {'success': False, 'message': 'Clase no válida o inactiva'}, 400
+            return {'success': False, 'message': 'Clase no válida o ya finalizó'}, 400
         
         clase_info = clase[0]
+        print(f"📚 Clase encontrada y activa")
         
         # 4. Verificar si ya registró asistencia para esta clase
         existente = db.query('asistencias', params={
@@ -422,47 +440,77 @@ def handler_registrar_asistencia(request):
         })
         
         if existente and len(existente) > 0:
-            return {'success': False, 'message': 'Ya registraste asistencia para esta clase'}, 400
+            return {'success': False, 'message': 'Ya registraste tu asistencia en esta clase'}, 400
         
         # 5. Calcular distancia si hay coordenadas
         distancia = None
         valida = True
         
-        if latitud and longitud and clase_info.get('latitud_referencia'):
-            punto_escaneo = (latitud, longitud)
-            punto_clase = (clase_info['latitud_referencia'], clase_info['longitud_referencia'])
-            distancia = calcular_distancia(latitud, longitud, 
-                                         clase_info['latitud_referencia'], 
-                                         clase_info['longitud_referencia'])
-            valida = distancia <= 7  # 5m + 2m tolerancia
+        if latitud and longitud and clase_info.get('latitud_referencia') and clase_info.get('longitud_referencia'):
+            distancia = calcular_distancia(
+                float(latitud), 
+                float(longitud), 
+                float(clase_info['latitud_referencia']), 
+                float(clase_info['longitud_referencia'])
+            )
+            
+            # Validar rango (100 metros de tolerancia)
+            DISTANCIA_MAXIMA = 100  # metros
+            if distancia and distancia > DISTANCIA_MAXIMA:
+                valida = False
+                print(f"⚠️ Fuera de rango: {distancia:.2f}m > {DISTANCIA_MAXIMA}m")
+            else:
+                print(f"✅ Dentro del rango: {distancia:.2f}m")
         
-        # 6. Registrar asistencia
+        # 6. Registrar asistencia en la base de datos
         nueva_asistencia = {
             'clase_id': clase_id,
-            'alumno_id': alumno_id,
+            'alumno_id': alumno_id,  # ✅ Este es el id de la tabla usuarios
             'fecha_escaneo': datetime.now().isoformat(),
-            'latitud_escaneo': latitud,
-            'longitud_escaneo': longitud,
-            'distancia_metros': distancia,
+            'latitud_escaneo': float(latitud) if latitud else None,
+            'longitud_escaneo': float(longitud) if longitud else None,
+            'distancia_metros': round(distancia, 2) if distancia else None,
             'valida': valida,
             'justificada': False
         }
         
+        print(f"💾 Insertando asistencia: {nueva_asistencia}")
+        
         result = db.query('asistencias', method='POST', data=nueva_asistencia)
         
         if result and len(result) > 0:
+            # 7. Obtener información adicional para la respuesta
+            materia = clase_info.get('materia', 'Clase')
+            
+            # Obtener nombre del profesor
+            profesor_nombre = None
+            if clase_info.get('profesor_id'):
+                profesor = db.query('usuarios', params={
+                    'id': f'eq.{clase_info["profesor_id"]}'
+                })
+                if profesor and len(profesor) > 0:
+                    profesor_nombre = profesor[0]['nombre']
+            
+            print(f"✅ Asistencia registrada con ID: {result[0]['id']}")
+            
             return {
                 'success': True,
                 'message': 'Asistencia registrada correctamente',
+                'asistencia_id': result[0]['id'],
+                'materia': materia,
+                'profesor': profesor_nombre,
+                'distancia_metros': round(distancia, 2) if distancia else None,
                 'valida': valida,
-                'distancia': distancia
+                'fecha_escaneo': result[0]['fecha_escaneo']
             }, 201
         else:
-            return {'success': False, 'message': 'Error al registrar asistencia'}, 500
+            return {'success': False, 'message': 'Error al registrar asistencia en la base de datos'}, 500
             
     except Exception as e:
-        print(f"Error registrando asistencia: {e}")
-        return {'success': False, 'message': str(e)}, 500
+        print(f"❌ Error registrando asistencia: {e}")
+        import traceback
+        traceback.print_exc()
+        return {'success': False, 'message': f'Error interno: {str(e)}'}, 500
 
 def handler_justificar(request):
     """POST /api/asistencia/justificar"""
@@ -674,3 +722,4 @@ def handler(request, **kwargs):
         
     except Exception as e:
         return (json.dumps({'error': str(e)}), 500, {'Content-Type': 'application/json', **headers})
+
