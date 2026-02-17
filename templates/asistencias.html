@@ -1561,14 +1561,98 @@
             }
         }
 
+        
         function verQR() {
-            if (!claseActiva) return;
-            document.getElementById('qrModalImage').src = document.getElementById('qrImage').src;
-            document.getElementById('qrModal').classList.add('active');
+            if (!claseActiva) {
+                mostrarToast('No hay clase activa', 'error');
+                return;
+            }
+            
+            // Generar timestamp actual para que el QR sea diferente
+            const timestamp = new Date().getTime();
+            
+            const qrData = {
+                clase_id: claseActiva.id,
+                profesor_id: usuarioActual.id,
+                timestamp: timestamp,  // Timestamp único
+                random: Math.random().toString(36).substring(2, 15) // Random string para mayor unicidad
+            };
+            
+            // Codificar los datos como JSON string
+            const qrString = JSON.stringify(qrData);
+            
+            // Generar URL del QR con los datos actualizados
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrString)}`;
+            
+            // Verificar si ya existe un modal y eliminarlo
+            const existingModal = document.getElementById('qrModalDynamic');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Crear modal con el QR actualizado
+            const modalHtml = `
+                <div class="modal active" id="qrModalDynamic" style="display: flex;">
+                    <div class="modal-content" style="max-width: 400px;">
+                        <div class="modal-header">
+                            <h2><i class="fas fa-qrcode"></i> QR de Clase</h2>
+                            <button class="modal-close" onclick="cerrarQRModal()">&times;</button>
+                        </div>
+                        <div class="modal-body" style="text-align: center;">
+                            <img src="${qrUrl}" style="width: 250px; height: 250px; margin: 20px 0; border-radius: 8px; box-shadow: var(--shadow-lg);">
+                            <p class="qr-info" style="margin: 10px 0;">Escanea para registrar asistencia</p>
+                            <p style="font-size: 0.8rem; color: var(--gray); margin-bottom: 15px;">
+                                <i class="fas fa-clock"></i> Generado: ${new Date().toLocaleTimeString()}
+                            </p>
+                            <div style="display: flex; gap: 10px; justify-content: center;">
+                                <button class="btn btn-primary" onclick="imprimirQR()">
+                                    <i class="fas fa-print"></i> Imprimir
+                                </button>
+                                <button class="btn btn-success" onclick="descargarQR()">
+                                    <i class="fas fa-download"></i> Descargar
+                                </button>
+                            </div>
+                            <button class="btn btn-secondary" style="margin-top: 15px; width: 100%;" onclick="generarNuevoQR()">
+                                <i class="fas fa-sync-alt"></i> Generar nuevo QR
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const modalContainer = document.createElement('div');
+            modalContainer.innerHTML = modalHtml;
+            document.body.appendChild(modalContainer);
         }
 
+        // Función para generar un nuevo QR (actualizar)
+        function generarNuevoQR() {
+            if (!claseActiva) {
+                mostrarToast('No hay clase activa', 'error');
+                return;
+            }
+            
+            const modal = document.getElementById('qrModalDynamic');
+            if (modal) {
+                modal.remove();
+            }
+            
+            verQR(); // Vuelve a generar el QR con nuevo timestamp
+        }
+
+        // Actualizar la función cerrarQRModal
+        function cerrarQRModal() {
+            const modal = document.getElementById('qrModalDynamic');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Actualizar funciones de imprimir y descargar para usar la imagen actual
         function imprimirQR() {
-            const qrUrl = document.getElementById('qrImage').src;
+            const img = document.querySelector('#qrModalDynamic img');
+            if (!img) return;
+            
             const ventana = window.open('', '_blank');
             ventana.document.write(`
                 <html>
@@ -1581,24 +1665,27 @@
                                 align-items: center; 
                                 height: 100vh; 
                                 margin: 0;
+                                background: white;
                             }
                             img { max-width: 400px; }
                         </style>
                     </head>
                     <body>
-                        <img src="${qrUrl}">
+                        <img src="${img.src}">
+                        <script>window.print();</script>
                     </body>
                 </html>
             `);
             ventana.document.close();
-            setTimeout(() => ventana.print(), 500);
         }
 
         function descargarQR() {
-            const qrUrl = document.getElementById('qrImage').src;
+            const img = document.querySelector('#qrModalDynamic img');
+            if (!img) return;
+            
             const link = document.createElement('a');
-            link.href = qrUrl;
-            link.download = `qr_clase_${claseActiva?.id || 'activa'}.png`;
+            link.href = img.src;
+            link.download = `qr_clase_${claseActiva?.id || 'activa'}_${new Date().getTime()}.png`;
             link.click();
         }
 
