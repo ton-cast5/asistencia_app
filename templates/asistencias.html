@@ -1371,22 +1371,33 @@
 
         // ===== VERIFICAR SESIÓN =====
         function verificarSesion() {
+            console.log('🔐 Verificando sesión...');
+            
             const telefonoId = localStorage.getItem('telefono_id');
+            const usuarioId = localStorage.getItem('usuario_id'); // ✅ NUEVO
             const userData = localStorage.getItem('user_data');
             
-            if (!telefonoId || !userData) {
+            console.log('📱 Teléfono ID:', telefonoId);
+            console.log('👤 Usuario ID:', usuarioId);
+            
+            if (!telefonoId || !usuarioId || !userData) {
+                console.error('❌ Sesión inválida - Redirigiendo a login');
                 window.location.href = '/';
                 return false;
             }
             
             try {
                 usuarioActual = JSON.parse(userData);
+                console.log('✅ Usuario actual:', usuarioActual);
+                
                 if (usuarioActual.rol !== 'profesor') {
-                    window.location.href = '/dashboard_alumno';
+                    console.log('⚠️ Usuario no es profesor - Redirigiendo');
+                    window.location.href = '/dashboard-alumno';
                     return false;
                 }
                 return true;
             } catch (e) {
+                console.error('❌ Error parseando user_data:', e);
                 cerrarSesion();
                 return false;
             }
@@ -1394,7 +1405,14 @@
 
         // ===== CARGAR DATOS DEL PROFESOR =====
         function cargarDatosProfesor() {
-            if (!usuarioActual) return;
+            console.log('👤 Cargando datos del profesor...');
+            
+            if (!usuarioActual) {
+                console.warn('⚠️ No hay usuarioActual');
+                return;
+            }
+            
+            console.log('✅ Datos cargados:', usuarioActual);
             
             document.getElementById('profesorNombre').textContent = usuarioActual.nombre || 'Profesor';
             document.getElementById('profesorEmail').textContent = usuarioActual.email || '';
@@ -1495,37 +1513,48 @@
         }
 
         async function iniciarClase() {
+            console.log('🎓 Iniciando clase...');
             mostrarLoading(true);
             
             navigator.geolocation.getCurrentPosition(async (position) => {
                 try {
+                    console.log('📍 Ubicación obtenida:', position.coords.latitude, position.coords.longitude);
+                    
+                    const requestData = {
+                        profesor_id: usuarioActual.id,
+                        latitud: position.coords.latitude,
+                        longitud: position.coords.longitude
+                    };
+                    
+                    console.log('📤 Enviando datos:', requestData);
+                    
                     const response = await fetch('/api/clase/iniciar', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            profesor_id: usuarioActual.id,
-                            latitud: position.coords.latitude,
-                            longitud: position.coords.longitude
-                        })
+                        body: JSON.stringify(requestData)
                     });
                     
                     const data = await response.json();
+                    console.log('📨 Respuesta del servidor:', data);
                     
                     if (data.success) {
                         claseActiva = data.clase;
+                        console.log('✅ Clase iniciada:', claseActiva);
                         mostrarClaseActiva();
                         mostrarToast('✅ Clase iniciada exitosamente', 'success');
+                        cargarAsistencias(); // Cargar asistencias inmediatamente
                     } else {
+                        console.error('❌ Error al iniciar:', data.message);
                         mostrarToast('❌ ' + data.message, 'error');
                     }
                 } catch (error) {
-                    console.error('Error:', error);
+                    console.error('❌ Error en iniciarClase:', error);
                     mostrarToast('❌ Error al iniciar clase', 'error');
                 } finally {
                     mostrarLoading(false);
                 }
             }, (error) => {
-                console.error('Error geolocalización:', error);
+                console.error('❌ Error geolocalización:', error);
                 mostrarToast('❌ Error al obtener ubicación', 'error');
                 mostrarLoading(false);
             });
@@ -1617,17 +1646,42 @@
             }
             
             try {
-                const response = await fetch(`/api/clase/${claseActiva.id}/asistencias`);
-                const data = await response.json();
+                console.log(`📥 Cargando asistencias de clase ${claseActiva.id}...`);
                 
-                if (data.success) {
+                const response = await fetch(`/api/clase/${claseActiva.id}/asistencias`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('📊 Asistencias recibidas:', data);
+                
+                if (data.success && data.asistencias) {
                     actualizarTablaAsistencias(data.asistencias);
                     actualizarEstadisticas(data.asistencias);
                     actualizarMapa(data.asistencias);
                     actualizarActividadReciente(data.asistencias);
+                } else {
+                    console.error('❌ Respuesta sin éxito:', data);
+                    mostrarToast('Error al cargar asistencias', 'error');
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('❌ Error cargando asistencias:', error);
+                mostrarToast('Error de conexión al cargar asistencias', 'error');
+                
+                // Mostrar mensaje de error en la tabla
+                document.getElementById('asistenciasBody').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center" style="padding: 40px;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: var(--danger);"></i>
+                            <p style="margin-top: 12px; color: var(--danger);">Error al cargar asistencias</p>
+                            <button class="btn btn-primary" onclick="cargarAsistencias()" style="margin-top: 10px;">
+                                <i class="fas fa-sync-alt"></i> Reintentar
+                            </button>
+                        </td>
+                    </tr>
+                `;
             }
         }
 
