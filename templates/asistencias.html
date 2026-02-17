@@ -1,21 +1,33 @@
-<!-- templates/asistencias.html - VERSIÓN CORREGIDA -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema de asistencias en tiempo real">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Asistencias en Vivo · Profesor</title>
     
     <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" 
+          integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" 
+          crossorigin="anonymous" 
+          referrerpolicy="no-referrer">
     
     <!-- Leaflet para mapas -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin="anonymous">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+            crossorigin="anonymous"></script>
     
     <!-- SheetJS para Excel -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" 
+            integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfG+C4Afi+IxdV9lnN5LS+nRRGM6frdZtqLQXZWPZq9SAg==" 
+            crossorigin="anonymous"></script>
     
     <style>
         /* ===== RESET & VARIABLES ===== */
@@ -48,6 +60,9 @@
             --radius-sm: 8px;
             --radius-md: 12px;
             --radius-lg: 16px;
+            
+            --transition-fast: 0.15s ease;
+            --transition-normal: 0.3s ease;
         }
 
         body {
@@ -60,8 +75,14 @@
 
         /* ===== ANIMACIONES ===== */
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
         }
 
         @keyframes pulse {
@@ -70,12 +91,23 @@
         }
 
         @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+            from { 
+                transform: translateX(100%); 
+                opacity: 0; 
+            }
+            to { 
+                transform: translateX(0); 
+                opacity: 1; 
+            }
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         /* ===== BACKGROUND DECORATION ===== */
@@ -133,7 +165,7 @@
             left: 0;
             height: 100vh;
             z-index: 100;
-            transition: transform 0.3s ease;
+            transition: transform var(--transition-normal);
         }
 
         .sidebar-header {
@@ -176,7 +208,7 @@
             color: var(--dark);
             text-decoration: none;
             border-radius: var(--radius-md);
-            transition: all 0.2s ease;
+            transition: all var(--transition-fast);
             font-weight: 500;
             font-size: 0.95rem;
         }
@@ -187,9 +219,11 @@
             font-size: 1.1rem;
         }
 
-        .menu-item a:hover {
+        .menu-item a:hover,
+        .menu-item a:focus {
             background: rgba(67, 97, 238, 0.08);
             transform: translateX(4px);
+            outline: 2px solid transparent;
         }
 
         .menu-item.active a {
@@ -233,21 +267,18 @@
             min-width: 0;
         }
 
-        .user-details h4 {
-            font-size: 0.95rem;
-            margin-bottom: 2px;
+        .user-name {
+            font-weight: 600;
             color: var(--dark);
+            font-size: 0.95rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .user-details p {
-            font-size: 0.75rem;
+        .user-role {
             color: var(--gray);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 0.8rem;
         }
 
         .logout-btn {
@@ -257,19 +288,21 @@
             color: white;
             border: none;
             border-radius: var(--radius-md);
-            cursor: pointer;
             font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
+            cursor: pointer;
+            transition: all var(--transition-fast);
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            font-family: inherit;
         }
 
-        .logout-btn:hover {
+        .logout-btn:hover,
+        .logout-btn:focus {
             transform: translateY(-2px);
             box-shadow: var(--shadow-md);
+            outline: 2px solid rgba(239, 71, 111, 0.3);
         }
 
         /* ===== MAIN CONTENT ===== */
@@ -277,17 +310,16 @@
             flex: 1;
             margin-left: 280px;
             padding: 24px;
-            animation: slideUp 0.4s ease;
+            overflow-y: auto;
         }
 
-        /* ===== MOBILE HEADER ===== */
         .mobile-header {
             display: none;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.98);
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-md);
@@ -296,55 +328,27 @@
         .menu-toggle {
             background: none;
             border: none;
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             cursor: pointer;
             color: var(--primary);
-            padding: 4px;
+            padding: 8px;
         }
 
-        .mobile-header h2 {
-            font-size: 1.2rem;
-            color: var(--dark);
-            margin: 0;
-        }
-
-        /* ===== QR SECTION ===== */
-        .qr-section {
-            background: rgba(255, 255, 255, 0.98);
+        /* ===== CONTROL DE CLASE ===== */
+        .clase-control {
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
+            padding: 25px;
             border-radius: var(--radius-lg);
-            padding: 24px;
-            margin-bottom: 24px;
             box-shadow: var(--shadow-lg);
+            margin-bottom: 24px;
+            animation: slideUp 0.4s ease;
         }
 
-        .qr-section h2 {
-            font-size: 1.3rem;
-            color: var(--dark);
-            margin-bottom: 20px;
+        .clase-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-
-        .qr-section h2 i {
-            color: var(--primary);
-        }
-
-        .qr-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
-
-        .clase-status {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 20px;
-            background: var(--light);
-            border-radius: 50px;
+            gap: 15px;
             margin-bottom: 20px;
         }
 
@@ -352,11 +356,11 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
+            flex-shrink: 0;
         }
 
         .status-indicator.active {
             background: var(--success);
-            box-shadow: 0 0 0 3px rgba(6, 214, 160, 0.2);
             animation: pulse 2s infinite;
         }
 
@@ -364,81 +368,107 @@
             background: var(--gray);
         }
 
-        .clase-status span {
-            font-weight: 600;
-            font-size: 0.95rem;
+        .status-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .info-grid {
-            display: grid;
+        .clase-info {
+            display: none;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-            margin: 16px 0;
-            width: 100%;
+            gap: 15px;
+            padding: 15px 0;
+            margin-bottom: 20px;
         }
 
-        .info-item {
+        .clase-info-item {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 12px 16px;
-            background: var(--light);
-            border-radius: var(--radius-md);
-            font-size: 0.9rem;
+            color: var(--dark);
         }
 
-        .info-item i {
+        .clase-info-item i {
             color: var(--primary);
-            width: 18px;
-            font-size: 1rem;
+            font-size: 1.1rem;
         }
 
-        .qr-image-container {
-            position: relative;
-            margin: 20px 0;
+        .qr-container {
+            display: none;
+            background: rgba(67, 97, 238, 0.05);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            margin-bottom: 20px;
         }
 
         .qr-image {
-            width: 250px;
-            height: 250px;
+            max-width: 250px;
             border-radius: var(--radius-md);
-            box-shadow: var(--shadow-lg);
-            display: block;
+            box-shadow: var(--shadow-md);
+            margin: 0 auto 15px;
         }
 
         .qr-timer {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            background: rgba(0, 0, 0, 0.75);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-family: 'Courier New', monospace;
-            font-weight: 600;
+            font-size: 1rem;
+            color: var(--gray);
+            margin-top: 10px;
         }
 
-        .qr-controls {
+        .clase-controls {
             display: flex;
             gap: 12px;
-            margin: 16px 0;
             flex-wrap: wrap;
-            justify-content: center;
         }
 
+        .qr-info {
+            padding: 20px;
+            background: rgba(67, 97, 238, 0.05);
+            border-radius: var(--radius-md);
+            text-align: center;
+            color: var(--gray);
+        }
+
+        /* ===== BUTTONS ===== */
         .btn {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
             border-radius: var(--radius-md);
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all var(--transition-fast);
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            text-decoration: none;
             white-space: nowrap;
+            font-family: inherit;
+        }
+
+        .btn:focus {
+            outline: 2px solid currentColor;
+            outline-offset: 2px;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
         }
 
         .btn-success {
@@ -446,19 +476,19 @@
             color: white;
         }
 
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
         .btn-danger {
             background: var(--gradient-danger);
             color: white;
         }
 
-        .btn-primary {
-            background: var(--gradient-primary);
-            color: white;
-        }
-
-        .btn-warning {
-            background: var(--gradient-warning);
-            color: var(--dark);
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-secondary {
@@ -466,313 +496,259 @@
             color: var(--dark);
         }
 
-        .btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+        .btn-secondary:hover:not(:disabled) {
+            background: #e9ecef;
         }
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .qr-info {
-            text-align: center;
-            padding: 16px;
-            background: var(--light);
-            border-radius: var(--radius-md);
-            color: var(--gray);
-            margin-top: 12px;
-        }
-
-        .qr-info i {
-            margin-right: 8px;
-            color: var(--primary);
-        }
-
-        /* ===== FILTERS ===== */
-        .filters-section {
-            background: rgba(255, 255, 255, 0.98);
+        /* ===== FILTROS ===== */
+        .filtros-section {
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: var(--radius-lg);
             padding: 20px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
             margin-bottom: 24px;
-            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.5s ease;
+        }
+
+        .filtros-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            align-items: end;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
         }
 
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+        .search-box {
+            position: relative;
         }
 
-        .filter-group label {
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: var(--dark);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .filter-group input,
-        .filter-group select {
-            padding: 10px 12px;
-            border: 2px solid #e9ecef;
+        .search-box input {
+            width: 100%;
+            padding: 10px 40px 10px 16px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
             border-radius: var(--radius-md);
-            font-size: 0.9rem;
-            transition: border-color 0.2s ease;
+            font-size: 0.95rem;
+            transition: all var(--transition-fast);
             font-family: inherit;
         }
 
-        .filter-group input:focus,
-        .filter-group select:focus {
+        .search-box input:focus {
             outline: none;
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
         }
 
-        .filter-actions {
+        .search-box i {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+            pointer-events: none;
+        }
+
+        .filter-tabs {
             display: flex;
             gap: 8px;
-            flex-wrap: wrap;
         }
 
-        /* ===== TABLE ===== */
-        .table-container {
-            background: rgba(255, 255, 255, 0.98);
+        .filter-btn {
+            padding: 10px 16px;
+            background: rgba(0, 0, 0, 0.03);
+            border: 2px solid transparent;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--dark);
+            font-family: inherit;
+        }
+
+        .filter-btn:hover {
+            background: rgba(67, 97, 238, 0.08);
+        }
+
+        .filter-btn.active {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: var(--primary-dark);
+        }
+
+        /* ===== TABLE SECTION ===== */
+        .table-section {
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-lg);
-            margin-bottom: 24px;
             overflow: hidden;
+            animation: slideUp 0.6s ease;
+            margin-bottom: 24px;
         }
 
-        .table-header {
+        .section-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 12px;
-            padding: 16px 20px;
-            background: var(--gradient-primary);
-            color: white;
         }
 
-        .table-header h3 {
-            font-size: 1.1rem;
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark);
             display: flex;
             align-items: center;
             gap: 8px;
-            margin: 0;
         }
 
-        .table-stats {
+        .section-actions {
             display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
+            gap: 10px;
         }
 
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            white-space: nowrap;
-        }
-
-        .table-responsive {
+        .table-container {
             overflow-x: auto;
         }
 
-        table {
+        .data-table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        th {
+        .data-table thead {
+            background: rgba(67, 97, 238, 0.05);
+        }
+
+        .data-table th {
+            padding: 16px;
             text-align: left;
-            padding: 14px 16px;
-            background: var(--light);
-            color: var(--dark);
             font-weight: 600;
+            color: var(--dark);
             font-size: 0.85rem;
-            border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             white-space: nowrap;
         }
 
-        td {
-            padding: 14px 16px;
+        .data-table td {
+            padding: 16px;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            font-size: 0.9rem;
+            color: var(--dark);
+            font-size: 0.95rem;
         }
 
-        tr:hover {
-            background: rgba(67, 97, 238, 0.02);
+        .data-table tbody tr {
+            transition: background-color var(--transition-fast);
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(67, 97, 238, 0.03);
         }
 
         .badge {
-            padding: 4px 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
             white-space: nowrap;
         }
 
         .badge-success {
             background: rgba(6, 214, 160, 0.15);
-            color: var(--success);
-            border-left: 3px solid var(--success);
+            color: #05b588;
         }
 
         .badge-warning {
             background: rgba(255, 209, 102, 0.15);
-            color: #b58b00;
-            border-left: 3px solid var(--warning);
+            color: #e5b850;
         }
 
         .badge-danger {
             background: rgba(239, 71, 111, 0.15);
-            color: #b0003a;
-            border-left: 3px solid var(--danger);
+            color: #d13d60;
         }
 
-        .text-success { color: var(--success); font-weight: 600; }
-        .text-warning { color: #b58b00; font-weight: 600; }
-        .text-center { text-align: center; }
+        .table-actions {
+            display: flex;
+            gap: 8px;
+        }
 
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 0.8rem;
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: transparent;
+            color: var(--gray);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .btn-icon:hover,
+        .btn-icon:focus {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--primary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+            color: var(--dark);
         }
 
         /* ===== MAPA ===== */
-        .mapa-container {
-            background: rgba(255, 255, 255, 0.98);
+        .map-section {
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: var(--radius-lg);
-            padding: 20px;
-            margin-bottom: 24px;
             box-shadow: var(--shadow-lg);
-        }
-
-        .mapa-container h3 {
-            font-size: 1.1rem;
-            color: var(--dark);
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            overflow: hidden;
+            animation: slideUp 0.7s ease;
         }
 
         #mapa {
             height: 400px;
-            border-radius: var(--radius-md);
-            z-index: 1;
+            width: 100%;
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
         }
 
-        /* ===== ACTIVIDAD RECIENTE ===== */
-        .actividad-container {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .actividad-container h3 {
-            font-size: 1.1rem;
-            color: var(--dark);
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .actividad-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .actividad-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            transition: all 0.2s ease;
-        }
-
-        .actividad-item:last-child {
-            border-bottom: none;
-        }
-
-        .actividad-item:hover {
-            background: var(--light);
-            transform: translateX(4px);
-        }
-
-        .actividad-icono {
-            width: 42px;
-            height: 42px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-        }
-
-        .actividad-icono.success {
-            background: rgba(6, 214, 160, 0.15);
-            color: var(--success);
-        }
-
-        .actividad-icono.warning {
-            background: rgba(255, 209, 102, 0.15);
-            color: var(--warning);
-        }
-
-        .actividad-detalle {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .actividad-titulo {
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--dark);
-            margin-bottom: 2px;
-        }
-
-        .actividad-tiempo {
-            font-size: 0.75rem;
-            color: var(--gray);
-        }
-
-        /* ===== MODAL ===== */
+        /* ===== MODALS ===== */
         .modal {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(5px);
             z-index: 1000;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            animation: fadeIn var(--transition-normal);
         }
 
         .modal.active {
@@ -786,111 +762,118 @@
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
-            animation: slideUp 0.3s ease;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp var(--transition-normal);
         }
 
         .modal-header {
-            padding: 20px;
-            border-bottom: 1px solid #e9ecef;
+            padding: 24px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .modal-header h2 {
-            font-size: 1.1rem;
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
             color: var(--dark);
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin: 0;
+            gap: 12px;
         }
 
         .modal-close {
-            background: none;
+            width: 32px;
+            height: 32px;
             border: none;
+            background: transparent;
+            color: var(--gray);
             font-size: 1.5rem;
             cursor: pointer;
-            color: var(--gray);
-            padding: 0;
-            width: 30px;
-            height: 30px;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-fast);
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
-            transition: background 0.2s ease;
         }
 
-        .modal-close:hover {
-            background: var(--light);
+        .modal-close:hover,
+        .modal-close:focus {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--dark);
         }
 
         .modal-body {
-            padding: 20px;
+            padding: 24px;
         }
 
         .modal-footer {
-            padding: 20px;
-            border-top: 1px solid #e9ecef;
+            padding: 20px 24px;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
             display: flex;
+            gap: 12px;
             justify-content: flex-end;
-            gap: 10px;
         }
 
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             font-weight: 600;
-            font-size: 0.9rem;
             color: var(--dark);
+            font-size: 0.9rem;
         }
 
         .form-control {
             width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #e9ecef;
+            padding: 12px 16px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
             border-radius: var(--radius-md);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-family: inherit;
-            transition: border-color 0.2s ease;
+            transition: all var(--transition-fast);
         }
 
         .form-control:focus {
             outline: none;
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
         }
 
-        .form-text {
-            padding: 10px 12px;
+        .form-control:disabled,
+        .form-control:read-only {
             background: var(--light);
-            border-radius: var(--radius-sm);
-            font-size: 0.9rem;
+            cursor: not-allowed;
         }
 
         textarea.form-control {
             resize: vertical;
-            min-height: 80px;
+            min-height: 100px;
         }
 
-        /* ===== LOADING ===== */
+        .form-text {
+            margin: 0;
+            color: var(--dark);
+            font-size: 0.95rem;
+        }
+
+        /* ===== LOADING OVERLAY ===== */
         .loading-overlay {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.95);
-            z-index: 2000;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
             align-items: center;
             justify-content: center;
-            flex-direction: column;
-            gap: 16px;
         }
 
         .loading-overlay.active {
@@ -898,67 +881,87 @@
         }
 
         .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid var(--light);
-            border-top-color: var(--primary);
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
 
-        .loading-overlay p {
-            color: var(--dark);
-            font-weight: 600;
-        }
-
-        /* ===== TOAST ===== */
+        /* ===== TOAST NOTIFICATIONS ===== */
         .toast-container {
             position: fixed;
             top: 20px;
             right: 20px;
-            z-index: 3000;
-            max-width: 400px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .toast {
             background: white;
+            padding: 16px 20px;
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-lg);
-            padding: 14px 16px;
-            margin-bottom: 10px;
             display: flex;
             align-items: center;
             gap: 12px;
-            animation: slideIn 0.3s ease;
+            min-width: 300px;
+            animation: slideIn var(--transition-normal);
+        }
+
+        .toast.success {
             border-left: 4px solid var(--success);
         }
 
         .toast.error {
-            border-left-color: var(--danger);
+            border-left: 4px solid var(--danger);
         }
 
         .toast.warning {
-            border-left-color: var(--warning);
+            border-left: 4px solid var(--warning);
         }
 
-        .toast i {
-            font-size: 1.2rem;
+        .toast i:first-child {
+            font-size: 1.25rem;
+        }
+
+        .toast.success i:first-child {
+            color: var(--success);
+        }
+
+        .toast.error i:first-child {
+            color: var(--danger);
+        }
+
+        .toast.warning i:first-child {
+            color: var(--warning);
         }
 
         .toast span {
             flex: 1;
-            font-size: 0.9rem;
+            color: var(--dark);
+            font-weight: 500;
         }
 
         .toast button {
             background: none;
             border: none;
-            cursor: pointer;
             color: var(--gray);
+            cursor: pointer;
             padding: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-fast);
+        }
+
+        .toast button:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--dark);
         }
 
         /* ===== RESPONSIVE ===== */
@@ -966,346 +969,344 @@
             .sidebar {
                 transform: translateX(-100%);
             }
-            
+
             .sidebar.active {
                 transform: translateX(0);
             }
-            
+
             .main-content {
                 margin-left: 0;
                 padding: 16px;
             }
-            
+
             .mobile-header {
                 display: flex;
             }
-            
-            .info-grid {
+
+            .filtros-grid {
                 grid-template-columns: 1fr;
             }
-            
-            .qr-image {
-                width: 200px;
-                height: 200px;
+
+            .filter-tabs {
+                flex-wrap: wrap;
             }
-            
-            .qr-controls {
+
+            .clase-controls {
+                flex-direction: column;
+            }
+
+            .btn {
                 width: 100%;
-            }
-            
-            .qr-controls .btn {
-                flex: 1;
                 justify-content: center;
             }
-            
-            .filters-section {
-                grid-template-columns: 1fr;
-            }
-            
-            .filter-actions {
+
+            .section-actions {
                 width: 100%;
-            }
-            
-            .filter-actions .btn {
-                flex: 1;
-            }
-            
-            .table-responsive {
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            table {
-                font-size: 0.85rem;
-            }
-            
-            th, td {
-                padding: 10px 8px;
-            }
-            
-            .toast-container {
-                right: 10px;
-                left: 10px;
-                max-width: none;
+                flex-direction: column;
             }
         }
 
-        @media (max-width: 480px) {
-            .sidebar {
-                width: 260px;
-            }
-            
-            .qr-section h2 {
-                font-size: 1.1rem;
-            }
-            
-            .qr-image {
-                width: 180px;
-                height: 180px;
-            }
-            
-            .table-stats {
-                width: 100%;
-                justify-content: center;
-            }
+        /* ===== UTILITIES ===== */
+        .text-center {
+            text-align: center;
+        }
+
+        .d-none {
+            display: none !important;
+        }
+
+        /* ===== ACCESSIBILITY ===== */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        *:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
     </style>
 </head>
 <body>
     <!-- Background Decorations -->
-    <div class="bg-decoration">
+    <div class="bg-decoration" aria-hidden="true">
         <div class="bg-circle circle1"></div>
         <div class="bg-circle circle2"></div>
     </div>
 
     <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
-        <p>Cargando datos...</p>
+    <div class="loading-overlay" id="loadingOverlay" role="alert" aria-live="assertive" aria-busy="true">
+        <div class="spinner" aria-label="Cargando"></div>
     </div>
 
     <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
+    <div class="toast-container" id="toastContainer" role="region" aria-live="polite" aria-atomic="true"></div>
 
     <!-- Dashboard -->
     <div class="dashboard">
         <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
+        <aside class="sidebar" id="sidebar" role="navigation" aria-label="Menú principal">
             <div class="sidebar-header">
                 <h2>
-                    <i class="fas fa-qrcode"></i>
+                    <i class="fas fa-graduation-cap" aria-hidden="true"></i>
                     AsistenciaApp
                 </h2>
-                <p>Panel del Profesor</p>
+                <p>Sistema de Asistencias</p>
             </div>
-            
+
             <ul class="sidebar-menu">
                 <li class="menu-item">
-                    <a href="/dashboard_profesor">
-                        <i class="fas fa-chart-pie"></i>
-                        Dashboard
+                    <a href="/dashboard" aria-label="Ir al panel principal">
+                        <i class="fas fa-home" aria-hidden="true"></i>
+                        <span>Dashboard</span>
                     </a>
                 </li>
                 <li class="menu-item active">
-                    <a href="/asistencias">
-                        <i class="fas fa-calendar-check"></i>
-                        Asistencias en Vivo
+                    <a href="/asistencias" aria-current="page" aria-label="Vista de asistencias en vivo">
+                        <i class="fas fa-users" aria-hidden="true"></i>
+                        <span>Asistencias en Vivo</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="/historial">
-                        <i class="fas fa-history"></i>
-                        Historial
+                    <a href="/historial" aria-label="Ver historial">
+                        <i class="fas fa-history" aria-hidden="true"></i>
+                        <span>Historial</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="/reportes">
-                        <i class="fas fa-file-alt"></i>
-                        Reportes
+                    <a href="/reportes" aria-label="Ver reportes">
+                        <i class="fas fa-chart-bar" aria-hidden="true"></i>
+                        <span>Reportes</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="/configuracion" aria-label="Configuración del sistema">
+                        <i class="fas fa-cog" aria-hidden="true"></i>
+                        <span>Configuración</span>
                     </a>
                 </li>
             </ul>
-            
+
             <div class="sidebar-footer">
                 <div class="user-info">
-                    <div class="user-avatar" id="profesorAvatar">P</div>
+                    <div class="user-avatar" id="profesorAvatar" aria-hidden="true">
+                        <span>PR</span>
+                    </div>
                     <div class="user-details">
-                        <h4 id="profesorNombre">Cargando...</h4>
-                        <p id="profesorEmail">cargando...</p>
+                        <div class="user-name" id="profesorNombre">Profesor</div>
+                        <div class="user-role">Docente</div>
                     </div>
                 </div>
-                <button class="logout-btn" onclick="cerrarSesion()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Cerrar Sesión
+                <button class="logout-btn" onclick="cerrarSesion()" aria-label="Cerrar sesión">
+                    <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                    <span>Cerrar Sesión</span>
                 </button>
             </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="main-content">
+        <main class="main-content" id="mainContent" role="main">
             <!-- Mobile Header -->
             <div class="mobile-header">
-                <button class="menu-toggle" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
+                <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Alternar menú">
+                    <i class="fas fa-bars" aria-hidden="true"></i>
                 </button>
                 <h2>Asistencias en Vivo</h2>
             </div>
 
             <!-- Control de Clase -->
-            <div class="qr-section">
-                <h2><i class="fas fa-qrcode"></i> Control de Clase</h2>
-                
-                <div class="qr-container">
-                    <!-- Estado de la clase -->
-                    <div class="clase-status" id="claseStatus">
-                        <div class="status-indicator" id="statusIndicator"></div>
-                        <span id="statusText">Verificando estado...</span>
-                    </div>
+            <section class="clase-control" aria-labelledby="statusText">
+                <div class="clase-header">
+                    <div class="status-indicator inactive" id="statusIndicator" aria-hidden="true"></div>
+                    <h2 class="status-text" id="statusText">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                        <span>No hay clase activa</span>
+                    </h2>
+                </div>
 
-                    <!-- Información de la clase actual -->
-                    <div class="info-grid" id="claseInfo" style="display: none;">
-                        <div class="info-item">
-                            <i class="fas fa-calendar"></i>
-                            <span id="claseFecha">-</span>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-clock"></i>
-                            <span id="claseHora">-</span>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span id="claseUbicacion">-</span>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-users"></i>
-                            <span id="claseAsistencias">0 asistencias</span>
-                        </div>
+                <!-- Información de la clase actual -->
+                <div class="clase-info" id="claseInfo">
+                    <div class="clase-info-item">
+                        <i class="fas fa-calendar" aria-hidden="true"></i>
+                        <span id="claseFecha">-</span>
                     </div>
-
-                    <!-- QR Code -->
-                    <div class="qr-image-container" id="qrContainer" style="display: none;">
-                        <img id="qrImage" class="qr-image" src="" alt="QR de clase">
-                        <div class="qr-timer" id="qrTimer">00:00</div>
+                    <div class="clase-info-item">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                        <span id="claseHora">-</span>
                     </div>
-
-                    <!-- Controles -->
-                    <div class="qr-controls">
-                        <button class="btn btn-success" id="iniciarClaseBtn" onclick="iniciarClase()">
-                            <i class="fas fa-play"></i> Iniciar Clase
-                        </button>
-                        <button class="btn btn-danger" id="terminarClaseBtn" onclick="terminarClase()" style="display: none;">
-                            <i class="fas fa-stop"></i> Terminar Clase
-                        </button>
-                        <button class="btn btn-primary" id="verQrBtn" onclick="verQR()" style="display: none;">
-                            <i class="fas fa-qrcode"></i> Ver QR
-                        </button>
-                        <button class="btn btn-warning" id="descargarQrBtn" onclick="descargarQR()" style="display: none;">
-                            <i class="fas fa-download"></i> Descargar QR
-                        </button>
-                    </div>
-
-                    <!-- Instrucciones -->
-                    <div class="qr-info" id="qrInfo">
-                        <i class="fas fa-info-circle"></i>
-                        Inicia una clase para generar el código QR
+                    <div class="clase-info-item">
+                        <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                        <span id="claseUbicacion">-</span>
                     </div>
                 </div>
-            </div>
+
+                <!-- QR Code -->
+                <div class="qr-container" id="qrContainer">
+                    <img id="qrImage" class="qr-image" src="" alt="Código QR de la clase">
+                    <div class="qr-timer" id="qrTimer">⏱️ 00:00</div>
+                </div>
+
+                <!-- Controles -->
+                <div class="clase-controls">
+                    <button class="btn btn-success" id="iniciarClaseBtn" onclick="iniciarClase()" aria-label="Iniciar clase">
+                        <i class="fas fa-play" aria-hidden="true"></i>
+                        <span>Iniciar Clase</span>
+                    </button>
+                    <button class="btn btn-danger" id="terminarClaseBtn" onclick="terminarClase()" style="display: none;" aria-label="Terminar clase">
+                        <i class="fas fa-stop" aria-hidden="true"></i>
+                        <span>Terminar Clase</span>
+                    </button>
+                    <button class="btn btn-primary" id="verQrBtn" onclick="verQR()" style="display: none;" aria-label="Ver código QR">
+                        <i class="fas fa-qrcode" aria-hidden="true"></i>
+                        <span>Ver QR</span>
+                    </button>
+                    <button class="btn btn-secondary" id="descargarQrBtn" onclick="descargarQR()" style="display: none;" aria-label="Descargar código QR">
+                        <i class="fas fa-download" aria-hidden="true"></i>
+                        <span>Descargar QR</span>
+                    </button>
+                </div>
+
+                <!-- Instrucciones -->
+                <div class="qr-info" id="qrInfo">
+                    <i class="fas fa-info-circle" aria-hidden="true"></i>
+                    <p>Inicia una clase para generar el código QR y comenzar a registrar asistencias</p>
+                </div>
+            </section>
 
             <!-- Filtros -->
-            <div class="filters-section">
-                <div class="filter-group">
-                    <label><i class="fas fa-search"></i> Buscar alumno</label>
-                    <input type="text" id="buscarAlumno" placeholder="Nombre o matrícula..." onkeyup="filtrarAsistencias()">
-                </div>
-                
-                <div class="filter-group">
-                    <label><i class="fas fa-filter"></i> Filtrar por estado</label>
-                    <select id="filtroAsistencia" onchange="filtrarAsistencias()">
-                        <option value="todos">Todos los alumnos</option>
-                        <option value="presentes">Solo presentes</option>
-                        <option value="ausentes">Solo ausentes</option>
-                        <option value="justificados">Justificados</option>
-                    </select>
-                </div>
-
-                <div class="filter-actions">
-                    <button class="btn btn-primary" onclick="exportarExcel()">
-                        <i class="fas fa-file-excel"></i> Exportar
-                    </button>
-                    <button class="btn btn-secondary" onclick="cargarAsistencias()">
-                        <i class="fas fa-sync-alt"></i> Actualizar
-                    </button>
-                </div>
-            </div>
-
-            <!-- Tabla de asistencias -->
-            <div class="table-container">
-                <div class="table-header">
-                    <h3><i class="fas fa-users"></i> Alumnos en Clase</h3>
-                    <div class="table-stats">
-                        <span class="stat-item">
-                            <i class="fas fa-user-check"></i>
-                            <span id="totalPresentes">0</span> presentes
-                        </span>
-                        <span class="stat-item">
-                            <i class="fas fa-user-clock"></i>
-                            <span id="totalAusentes">0</span> ausentes
-                        </span>
-                        <span class="stat-item">
-                            <i class="fas fa-user-graduate"></i>
-                            <span id="totalAlumnos">0</span> total
-                        </span>
+            <section class="filtros-section" aria-label="Filtros de asistencia">
+                <div class="filtros-grid">
+                    <div class="search-box">
+                        <input type="text" 
+                               id="buscarAlumno" 
+                               placeholder="Buscar por nombre o matrícula..." 
+                               oninput="filtrarAsistencias()"
+                               aria-label="Buscar alumno"
+                               autocomplete="off">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                    </div>
+                    <div class="filter-tabs">
+                        <button class="filter-btn active" 
+                                data-filter="todos" 
+                                onclick="cambiarFiltro('todos')"
+                                aria-label="Mostrar todos">
+                            Todos
+                        </button>
+                        <button class="filter-btn" 
+                                data-filter="presentes" 
+                                onclick="cambiarFiltro('presentes')"
+                                aria-label="Mostrar presentes">
+                            Presentes
+                        </button>
+                        <button class="filter-btn" 
+                                data-filter="ausentes" 
+                                onclick="cambiarFiltro('ausentes')"
+                                aria-label="Mostrar ausentes">
+                            Ausentes
+                        </button>
+                        <button class="filter-btn" 
+                                data-filter="justificados" 
+                                onclick="cambiarFiltro('justificados')"
+                                aria-label="Mostrar justificados">
+                            Justificados
+                        </button>
                     </div>
                 </div>
+            </section>
 
-                <div class="table-responsive">
-                    <table id="tablaAsistencias">
+            <!-- Tabla de asistencias -->
+            <section class="table-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-list" aria-hidden="true"></i>
+                        Listado de Asistencias
+                    </h2>
+                    <div class="section-actions">
+                        <button class="btn btn-primary" onclick="cargarAsistencias()" aria-label="Actualizar asistencias">
+                            <i class="fas fa-sync-alt" aria-hidden="true"></i>
+                            <span>Actualizar</span>
+                        </button>
+                        <button class="btn btn-success" onclick="exportarExcel()" aria-label="Exportar a Excel">
+                            <i class="fas fa-file-excel" aria-hidden="true"></i>
+                            <span>Exportar</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" role="table" aria-label="Tabla de asistencias">
                         <thead>
                             <tr>
-                                <th>Matrícula</th>
-                                <th>Nombre</th>
-                                <th>Hora</th>
-                                <th>Distancia</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
+                                <th scope="col">Matrícula</th>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Hora</th>
+                                <th scope="col">Distancia</th>
+                                <th scope="col">Estado</th>
+                                <th scope="col">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="asistenciasBody">
                             <tr>
-                                <td colspan="6" class="text-center" style="padding: 40px;">
-                                    <div class="spinner" style="margin: 0 auto;"></div>
-                                    <p style="margin-top: 12px;">Cargando asistencias...</p>
+                                <td colspan="6" class="empty-state">
+                                    <i class="fas fa-info-circle" aria-hidden="true"></i>
+                                    <h3>Inicia una clase para ver asistencias</h3>
+                                    <p>Las asistencias aparecerán aquí en tiempo real</p>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </section>
 
             <!-- Mapa -->
-            <div class="mapa-container" id="mapaContainer" style="display: none;">
-                <h3><i class="fas fa-map-marked-alt"></i> Ubicaciones de Escaneo</h3>
-                <div id="mapa"></div>
-            </div>
-
-            <!-- Actividad Reciente -->
-            <div class="actividad-container">
-                <h3><i class="fas fa-history"></i> Actividad Reciente</h3>
-                <div class="actividad-list" id="actividadReciente">
-                    <div style="text-align: center; padding: 40px; color: var(--gray);">
-                        <i class="fas fa-clock" style="font-size: 2.5rem; margin-bottom: 12px;"></i>
-                        <p>No hay actividad reciente</p>
-                    </div>
+            <section class="map-section" id="mapaContainer" style="display: none;">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-map-marked-alt" aria-hidden="true"></i>
+                        Ubicaciones de Escaneo
+                    </h2>
                 </div>
-            </div>
+                <div id="mapa" role="region" aria-label="Mapa de ubicaciones de escaneo"></div>
+            </section>
         </main>
     </div>
 
-    <!-- Modal Justificar -->
-    <div class="modal" id="justificarModal">
+    <!-- Modal: Justificar -->
+    <div id="justificarModal" class="modal" role="dialog" aria-labelledby="justificarModalTitle" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h2><i class="fas fa-file-medical"></i> Justificar Falta</h2>
-                <button class="modal-close" onclick="cerrarModal('justificarModal')">&times;</button>
+                <h2 class="modal-title" id="justificarModalTitle">
+                    <i class="fas fa-file-medical" aria-hidden="true"></i>
+                    Justificar Falta
+                </h2>
+                <button class="modal-close" onclick="cerrarModal('justificarModal')" aria-label="Cerrar modal">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
             </div>
             <div class="modal-body">
                 <form id="justificarForm">
                     <input type="hidden" id="justificarAlumnoId">
                     <input type="hidden" id="justificarAsistenciaId">
-                    
+
                     <div class="form-group">
                         <label>Alumno</label>
-                        <p id="justificarAlumnoNombre" class="form-text">-</p>
+                        <p class="form-text" id="justificarAlumnoNombre">-</p>
                     </div>
 
                     <div class="form-group">
                         <label>Fecha</label>
-                        <p id="justificarFecha" class="form-text">-</p>
+                        <p class="form-text" id="justificarFecha">-</p>
                     </div>
 
                     <div class="form-group">
-                        <label>Motivo *</label>
-                        <select id="motivoJustificacion" class="form-control" required>
+                        <label for="motivoJustificacion">Motivo <span style="color: var(--danger);">*</span></label>
+                        <select id="motivoJustificacion" class="form-control" required aria-required="true">
                             <option value="">Selecciona un motivo</option>
                             <option value="enfermedad">Enfermedad</option>
                             <option value="familia">Asunto familiar</option>
@@ -1317,36 +1318,49 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Comentario</label>
-                        <textarea id="comentarioJustificacion" class="form-control" placeholder="Comentario adicional (opcional)"></textarea>
+                        <label for="comentarioJustificacion">Comentario</label>
+                        <textarea id="comentarioJustificacion" 
+                                  class="form-control" 
+                                  placeholder="Comentario adicional (opcional)"
+                                  maxlength="500"></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="cerrarModal('justificarModal')">Cancelar</button>
+                <button class="btn btn-secondary" onclick="cerrarModal('justificarModal')">
+                    Cancelar
+                </button>
                 <button class="btn btn-success" onclick="justificarFalta()">
-                    <i class="fas fa-check-circle"></i> Justificar
+                    <i class="fas fa-check-circle" aria-hidden="true"></i>
+                    Justificar
                 </button>
             </div>
         </div>
     </div>
 
     <!-- Modal QR -->
-    <div class="modal" id="qrModal">
+    <div class="modal" id="qrModal" role="dialog" aria-labelledby="qrModalTitle" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h2><i class="fas fa-qrcode"></i> Código QR de Clase</h2>
-                <button class="modal-close" onclick="cerrarModal('qrModal')">&times;</button>
+                <h2 class="modal-title" id="qrModalTitle">
+                    <i class="fas fa-qrcode" aria-hidden="true"></i>
+                    Código QR de Clase
+                </h2>
+                <button class="modal-close" onclick="cerrarModal('qrModal')" aria-label="Cerrar modal">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
             </div>
             <div class="modal-body" style="text-align: center;">
-                <img id="qrModalImage" class="qr-image" style="margin: 0 auto;" src="" alt="QR">
+                <img id="qrModalImage" class="qr-image" src="" alt="Código QR de la clase" style="margin: 0 auto;">
                 <p class="qr-info" id="qrModalInfo" style="margin-top: 16px;">Escanea para registrar asistencia</p>
                 <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-                    <button class="btn btn-primary" onclick="imprimirQR()">
-                        <i class="fas fa-print"></i> Imprimir
+                    <button class="btn btn-primary" onclick="imprimirQR()" aria-label="Imprimir código QR">
+                        <i class="fas fa-print" aria-hidden="true"></i>
+                        Imprimir
                     </button>
-                    <button class="btn btn-success" onclick="descargarQR()">
-                        <i class="fas fa-download"></i> Descargar
+                    <button class="btn btn-success" onclick="descargarQRModal()" aria-label="Descargar código QR">
+                        <i class="fas fa-download" aria-hidden="true"></i>
+                        Descargar
                     </button>
                 </div>
             </div>
@@ -1354,307 +1368,886 @@
     </div>
 
     <script>
-        // ===== VARIABLES GLOBALES =====
-        let usuarioActual = null;
-        let claseActiva = null;
-        let intervalActualizacion = null;
-        let mapa = null;
-        let marcadores = [];
+        'use strict';
+        
+        // ===== CONFIGURACIÓN Y CONSTANTES =====
+        const CONFIG = {
+            API_ENDPOINTS: {
+                CLASE_ACTIVA: '/api/clase/activa',
+                INICIAR_CLASE: '/api/clase/iniciar',
+                TERMINAR_CLASE: '/api/clase/terminar',
+                ASISTENCIAS: '/api/asistencias',
+                JUSTIFICAR: '/api/asistencia/justificar'
+            },
+            UPDATE_INTERVAL: 10000, // 10 segundos
+            TOAST_DURATION: 3000,
+            MAX_TOAST_LENGTH: 200,
+            DEBOUNCE_DELAY: 300
+        };
 
-        // ===== INICIALIZACIÓN =====
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!verificarSesion()) return;
-            cargarDatosProfesor();
-            verificarClaseActiva();
-            iniciarActualizacionAutomatica();
-        });
+        // ===== ESTADO DE LA APLICACIÓN =====
+        const AppState = {
+            usuarioActual: null,
+            claseActiva: null,
+            intervalActualizacion: null,
+            intervalTimer: null,
+            mapa: null,
+            marcadores: [],
+            filtroActual: 'todos'
+        };
 
-        // ===== VERIFICAR SESIÓN =====
-        function verificarSesion() {
-            const telefonoId = localStorage.getItem('telefono_id');
-            const userData = localStorage.getItem('user_data');
-            
-            if (!telefonoId || !userData) {
-                window.location.href = '/';
-                return false;
+        // ===== UTILIDADES =====
+        const Utils = {
+            /**
+             * Sanitiza texto para prevenir XSS
+             */
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            },
+
+            /**
+             * Debounce function
+             */
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            },
+
+            /**
+             * Formatea fecha
+             */
+            formatDate(date) {
+                if (!date) return '-';
+                try {
+                    const d = new Date(date);
+                    if (isNaN(d.getTime())) return '-';
+                    return d.toLocaleDateString('es-MX');
+                } catch (error) {
+                    console.error('Error formateando fecha:', error);
+                    return '-';
+                }
+            },
+
+            /**
+             * Formatea hora
+             */
+            formatTime(date) {
+                if (!date) return '-';
+                try {
+                    const d = new Date(date);
+                    if (isNaN(d.getTime())) return '-';
+                    return d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+                } catch (error) {
+                    console.error('Error formateando hora:', error);
+                    return '-';
+                }
+            },
+
+            /**
+             * Valida coordenadas
+             */
+            validarCoordenadas(lat, lng) {
+                return !isNaN(lat) && !isNaN(lng) && 
+                       lat >= -90 && lat <= 90 && 
+                       lng >= -180 && lng <= 180;
             }
-            
-            try {
-                usuarioActual = JSON.parse(userData);
-                if (usuarioActual.rol !== 'profesor') {
-                    window.location.href = '/dashboard_alumno';
+        };
+
+        // ===== MANEJO DE LOADING =====
+        const LoadingManager = {
+            show() {
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) {
+                    overlay.classList.add('active');
+                }
+            },
+
+            hide() {
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) {
+                    overlay.classList.remove('active');
+                }
+            }
+        };
+
+        // ===== SISTEMA DE NOTIFICACIONES =====
+        const ToastManager = {
+            show(mensaje, tipo = 'success') {
+                if (!mensaje) return;
+                
+                const mensajeTruncado = mensaje.length > CONFIG.MAX_TOAST_LENGTH 
+                    ? mensaje.substring(0, CONFIG.MAX_TOAST_LENGTH) + '...' 
+                    : mensaje;
+                
+                const container = document.getElementById('toastContainer');
+                if (!container) return;
+
+                const toast = document.createElement('div');
+                toast.className = `toast ${tipo}`;
+                toast.setAttribute('role', 'alert');
+                
+                const iconClass = {
+                    success: 'fa-check-circle',
+                    error: 'fa-exclamation-circle',
+                    warning: 'fa-info-circle'
+                }[tipo] || 'fa-info-circle';
+                
+                toast.innerHTML = `
+                    <i class="fas ${iconClass}" aria-hidden="true"></i>
+                    <span>${Utils.escapeHtml(mensajeTruncado)}</span>
+                    <button type="button" aria-label="Cerrar notificación">
+                        <i class="fas fa-times" aria-hidden="true"></i>
+                    </button>
+                `;
+                
+                const closeBtn = toast.querySelector('button');
+                closeBtn.addEventListener('click', () => toast.remove());
+                
+                container.appendChild(toast);
+                
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.style.animation = 'slideIn 0.3s ease reverse';
+                        setTimeout(() => toast.remove(), 300);
+                    }
+                }, CONFIG.TOAST_DURATION);
+            }
+        };
+
+        // ===== MANEJO DE MODALES =====
+        const ModalManager = {
+            open(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.add('active');
+                    const firstInput = modal.querySelector('input:not([readonly]):not([type="hidden"]), textarea, select, button');
+                    if (firstInput) {
+                        setTimeout(() => firstInput.focus(), 100);
+                    }
+                }
+            },
+
+            close(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.remove('active');
+                }
+            }
+        };
+
+        // ===== API CLIENT =====
+        const ApiClient = {
+            async request(url, options = {}) {
+                try {
+                    const response = await fetch(url, {
+                        ...options,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...options.headers
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('API Error:', error);
+                    throw error;
+                }
+            },
+
+            async getClaseActiva() {
+                return this.request(CONFIG.API_ENDPOINTS.CLASE_ACTIVA);
+            },
+
+            async iniciarClase(data) {
+                return this.request(CONFIG.API_ENDPOINTS.INICIAR_CLASE, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+            },
+
+            async terminarClase(data) {
+                return this.request(CONFIG.API_ENDPOINTS.TERMINAR_CLASE, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+            },
+
+            async getAsistencias() {
+                const params = new URLSearchParams({
+                    clase_id: AppState.claseActiva?.id || '',
+                    timestamp: Date.now()
+                });
+                return this.request(`${CONFIG.API_ENDPOINTS.ASISTENCIAS}?${params}`);
+            },
+
+            async justificarFalta(data) {
+                return this.request(CONFIG.API_ENDPOINTS.JUSTIFICAR, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+            }
+        };
+
+        // ===== MANEJO DE MAPA =====
+        const MapManager = {
+            init() {
+                if (!AppState.mapa) {
+                    const mapElement = document.getElementById('mapa');
+                    if (mapElement) {
+                        AppState.mapa = L.map('mapa').setView([19.4326, -99.1332], 13);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap contributors',
+                            maxZoom: 19
+                        }).addTo(AppState.mapa);
+                    }
+                }
+            },
+
+            update(asistencias) {
+                if (!asistencias || asistencias.length === 0) {
+                    this.hide();
+                    return;
+                }
+                
+                const conUbicacion = asistencias.filter(a => 
+                    Utils.validarCoordenadas(a.latitud_escaneo, a.longitud_escaneo)
+                );
+                
+                if (conUbicacion.length === 0) {
+                    this.hide();
+                    return;
+                }
+                
+                this.show();
+                this.init();
+                
+                // Limpiar marcadores anteriores
+                AppState.marcadores.forEach(m => AppState.mapa.removeLayer(m));
+                AppState.marcadores = [];
+                
+                // Agregar nuevos marcadores
+                conUbicacion.forEach(asistencia => {
+                    const popupContent = `
+                        <div style="min-width: 150px;">
+                            <strong>${Utils.escapeHtml(asistencia.nombre || 'N/A')}</strong><br>
+                            <strong>Matrícula:</strong> ${Utils.escapeHtml(asistencia.matricula || 'N/A')}<br>
+                            <strong>Hora:</strong> ${Utils.formatTime(asistencia.fecha_escaneo)}<br>
+                            <strong>Distancia:</strong> ${asistencia.distancia_metros?.toFixed(2) || 'N/A'}m
+                        </div>
+                    `;
+                    
+                    const marcador = L.marker([
+                        asistencia.latitud_escaneo, 
+                        asistencia.longitud_escaneo
+                    ]).bindPopup(popupContent);
+                    
+                    marcador.addTo(AppState.mapa);
+                    AppState.marcadores.push(marcador);
+                });
+                
+                // Ajustar vista del mapa
+                if (AppState.marcadores.length > 0) {
+                    const grupo = L.featureGroup(AppState.marcadores);
+                    AppState.mapa.fitBounds(grupo.getBounds().pad(0.1));
+                }
+            },
+
+            show() {
+                const container = document.getElementById('mapaContainer');
+                if (container) {
+                    container.style.display = 'block';
+                    if (AppState.mapa) {
+                        setTimeout(() => AppState.mapa.invalidateSize(), 100);
+                    }
+                }
+            },
+
+            hide() {
+                const container = document.getElementById('mapaContainer');
+                if (container) {
+                    container.style.display = 'none';
+                }
+            }
+        };
+
+        // ===== RENDERIZADO DE TABLA =====
+        const TableRenderer = {
+            update(asistencias) {
+                const tbody = document.getElementById('asistenciasBody');
+                if (!tbody) return;
+
+                tbody.innerHTML = '';
+
+                if (!asistencias || asistencias.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                                <h3>No hay asistencias registradas</h3>
+                                <p>Las asistencias aparecerán aquí en tiempo real</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                asistencias.forEach(asistencia => {
+                    const tr = document.createElement('tr');
+                    
+                    let badgeClass = 'success';
+                    let estadoIcon = 'fa-check-circle';
+                    let estadoTexto = 'Presente';
+                    
+                    if (asistencia.justificada) {
+                        badgeClass = 'warning';
+                        estadoIcon = 'fa-file-medical';
+                        estadoTexto = 'Justificado';
+                    } else if (!asistencia.valida) {
+                        badgeClass = 'warning';
+                        estadoIcon = 'fa-exclamation-triangle';
+                        estadoTexto = 'Fuera de rango';
+                    }
+                    
+                    tr.innerHTML = `
+                        <td>${Utils.escapeHtml(asistencia.matricula || 'N/A')}</td>
+                        <td>${Utils.escapeHtml(asistencia.nombre || 'N/A')}</td>
+                        <td>${Utils.formatTime(asistencia.fecha_escaneo)}</td>
+                        <td>${asistencia.distancia_metros?.toFixed(2) || 'N/A'}m</td>
+                        <td>
+                            <span class="badge badge-${badgeClass}">
+                                <i class="fas ${estadoIcon}" aria-hidden="true"></i>
+                                ${estadoTexto}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="table-actions">
+                                ${!asistencia.justificada ? `
+                                    <button class="btn-icon" 
+                                            onclick="abrirModalJustificar(${asistencia.alumno_id}, '${Utils.escapeHtml(asistencia.nombre)}', '${asistencia.fecha_escaneo}', ${asistencia.id})" 
+                                            title="Justificar"
+                                            aria-label="Justificar falta de ${Utils.escapeHtml(asistencia.nombre)}">
+                                        <i class="fas fa-file-medical" aria-hidden="true"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    `;
+                    
+                    tbody.appendChild(tr);
+                });
+            }
+        };
+
+        // ===== GESTIÓN DE SESIÓN =====
+        const SessionManager = {
+            verificar() {
+                const telefonoId = localStorage.getItem('telefono_id');
+                const userData = localStorage.getItem('user_data');
+                
+                if (!telefonoId || !userData) {
+                    window.location.href = '/';
                     return false;
                 }
-                return true;
-            } catch (e) {
-                cerrarSesion();
-                return false;
-            }
-        }
-
-        // ===== CARGAR DATOS DEL PROFESOR =====
-        function cargarDatosProfesor() {
-            if (!usuarioActual) return;
-            
-            document.getElementById('profesorNombre').textContent = usuarioActual.nombre || 'Profesor';
-            document.getElementById('profesorEmail').textContent = usuarioActual.email || '';
-            
-            const iniciales = usuarioActual.nombre ? 
-                usuarioActual.nombre.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 
-                'P';
-            document.getElementById('profesorAvatar').textContent = iniciales;
-        }
-
-        // ===== FUNCIONES DE CLASE =====
-        async function verificarClaseActiva() {
-            try {
-                const response = await fetch('/api/clase/activa');
-                const data = await response.json();
                 
-                if (data.activa) {
-                    claseActiva = data.clase;
-                    mostrarClaseActiva();
-                    cargarAsistencias();
-                } else {
-                    mostrarClaseInactiva();
+                try {
+                    AppState.usuarioActual = JSON.parse(userData);
+                    if (AppState.usuarioActual.rol !== 'profesor') {
+                        window.location.href = '/dashboard_alumno';
+                        return false;
+                    }
+                    return true;
+                } catch (e) {
+                    console.error('Error parsing user data:', e);
+                    this.cerrar();
+                    return false;
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                mostrarToast('Error al verificar clase', 'error');
-            }
-        }
+            },
 
-        function mostrarClaseActiva() {
-            document.getElementById('statusIndicator').className = 'status-indicator active';
-            document.getElementById('statusText').innerHTML = '<i class="fas fa-check-circle"></i> Clase activa';
-            document.getElementById('claseInfo').style.display = 'grid';
-            document.getElementById('qrContainer').style.display = 'block';
-            document.getElementById('iniciarClaseBtn').style.display = 'none';
-            document.getElementById('terminarClaseBtn').style.display = 'inline-flex';
-            document.getElementById('verQrBtn').style.display = 'inline-flex';
-            document.getElementById('descargarQrBtn').style.display = 'inline-flex';
-            document.getElementById('qrInfo').style.display = 'none';
-            
-            if (claseActiva) {
-                const fecha = new Date(claseActiva.fecha);
-                document.getElementById('claseFecha').textContent = fecha.toLocaleDateString('es-MX');
-                document.getElementById('claseHora').textContent = claseActiva.hora_inicio;
-                document.getElementById('claseUbicacion').textContent = `${claseActiva.latitud_referencia?.toFixed(4) || '?'}, ${claseActiva.longitud_referencia?.toFixed(4) || '?'}`;
+            cerrar() {
+                if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                    AutoUpdateManager.stop();
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.href = '/';
+                }
+            }
+        };
+
+        // ===== GESTIÓN DE CLASE =====
+        const ClaseManager = {
+            async verificar() {
+                try {
+                    const data = await ApiClient.getClaseActiva();
+                    
+                    if (data.activa && data.clase) {
+                        AppState.claseActiva = data.clase;
+                        this.mostrarActiva();
+                        await cargarAsistencias();
+                    } else {
+                        this.mostrarInactiva();
+                    }
+                } catch (error) {
+                    console.error('Error verificando clase:', error);
+                    ToastManager.show('Error al verificar clase', 'error');
+                }
+            },
+
+            mostrarActiva() {
+                const statusIndicator = document.getElementById('statusIndicator');
+                const statusText = document.getElementById('statusText');
+                const claseInfo = document.getElementById('claseInfo');
+                const qrContainer = document.getElementById('qrContainer');
+                const qrInfo = document.getElementById('qrInfo');
                 
-                const qrData = {
-                    clase_id: claseActiva.id,
-                    profesor_id: claseActiva.profesor_id,
-                    latitud: claseActiva.latitud_referencia,
-                    longitud: claseActiva.longitud_referencia,
-                    timestamp: new Date().toISOString()
+                if (statusIndicator) statusIndicator.className = 'status-indicator active';
+                if (statusText) statusText.innerHTML = '<i class="fas fa-check-circle" aria-hidden="true"></i> <span>Clase activa</span>';
+                if (claseInfo) claseInfo.style.display = 'grid';
+                if (qrContainer) qrContainer.style.display = 'block';
+                if (qrInfo) qrInfo.style.display = 'none';
+                
+                // Botones
+                const btnIniciar = document.getElementById('iniciarClaseBtn');
+                const btnTerminar = document.getElementById('terminarClaseBtn');
+                const btnVerQr = document.getElementById('verQrBtn');
+                const btnDescargar = document.getElementById('descargarQrBtn');
+                
+                if (btnIniciar) btnIniciar.style.display = 'none';
+                if (btnTerminar) btnTerminar.style.display = 'inline-flex';
+                if (btnVerQr) btnVerQr.style.display = 'inline-flex';
+                if (btnDescargar) btnDescargar.style.display = 'inline-flex';
+                
+                if (AppState.claseActiva) {
+                    // Actualizar información
+                    const fecha = document.getElementById('claseFecha');
+                    const hora = document.getElementById('claseHora');
+                    const ubicacion = document.getElementById('claseUbicacion');
+                    
+                    if (fecha) fecha.textContent = Utils.formatDate(AppState.claseActiva.fecha);
+                    if (hora) hora.textContent = AppState.claseActiva.hora_inicio || '-';
+                    if (ubicacion) {
+                        const lat = AppState.claseActiva.latitud_referencia?.toFixed(4) || '?';
+                        const lng = AppState.claseActiva.longitud_referencia?.toFixed(4) || '?';
+                        ubicacion.textContent = `${lat}, ${lng}`;
+                    }
+                    
+                    // Generar QR
+                    const qrData = {
+                        clase_id: AppState.claseActiva.id,
+                        profesor_id: AppState.claseActiva.profesor_id,
+                        latitud: AppState.claseActiva.latitud_referencia,
+                        longitud: AppState.claseActiva.longitud_referencia,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(JSON.stringify(qrData))}`;
+                    const qrImage = document.getElementById('qrImage');
+                    if (qrImage) qrImage.src = qrUrl;
+                }
+                
+                this.iniciarTimer();
+            },
+
+            mostrarInactiva() {
+                const statusIndicator = document.getElementById('statusIndicator');
+                const statusText = document.getElementById('statusText');
+                const claseInfo = document.getElementById('claseInfo');
+                const qrContainer = document.getElementById('qrContainer');
+                const qrInfo = document.getElementById('qrInfo');
+                
+                if (statusIndicator) statusIndicator.className = 'status-indicator inactive';
+                if (statusText) statusText.innerHTML = '<i class="fas fa-clock" aria-hidden="true"></i> <span>No hay clase activa</span>';
+                if (claseInfo) claseInfo.style.display = 'none';
+                if (qrContainer) qrContainer.style.display = 'none';
+                if (qrInfo) qrInfo.style.display = 'block';
+                
+                // Botones
+                const btnIniciar = document.getElementById('iniciarClaseBtn');
+                const btnTerminar = document.getElementById('terminarClaseBtn');
+                const btnVerQr = document.getElementById('verQrBtn');
+                const btnDescargar = document.getElementById('descargarQrBtn');
+                
+                if (btnIniciar) btnIniciar.style.display = 'inline-flex';
+                if (btnTerminar) btnTerminar.style.display = 'none';
+                if (btnVerQr) btnVerQr.style.display = 'none';
+                if (btnDescargar) btnDescargar.style.display = 'none';
+                
+                this.detenerTimer();
+            },
+
+            iniciarTimer() {
+                if (!AppState.claseActiva) return;
+                
+                this.detenerTimer();
+                
+                const timerElement = document.getElementById('qrTimer');
+                if (!timerElement) return;
+                
+                const horaInicio = new Date();
+                const [h, m, s] = (AppState.claseActiva.hora_inicio || '00:00:00').split(':');
+                horaInicio.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
+                
+                const actualizarTimer = () => {
+                    const ahora = new Date();
+                    const diff = Math.floor((ahora - horaInicio) / 1000);
+                    const horas = Math.floor(diff / 3600);
+                    const minutos = Math.floor((diff % 3600) / 60);
+                    const segundos = diff % 60;
+                    
+                    if (horas > 0) {
+                        timerElement.textContent = `⏱️ ${horas}h ${minutos}m`;
+                    } else {
+                        timerElement.textContent = `⏱️ ${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
+                    }
                 };
                 
-                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(JSON.stringify(qrData))}`;
-                document.getElementById('qrImage').src = qrUrl;
-            }
-            
-            iniciarTimerClase();
-        }
+                AppState.intervalTimer = setInterval(actualizarTimer, 1000);
+                actualizarTimer();
+            },
 
-        function mostrarClaseInactiva() {
-            document.getElementById('statusIndicator').className = 'status-indicator inactive';
-            document.getElementById('statusText').innerHTML = '<i class="fas fa-clock"></i> No hay clase activa';
-            document.getElementById('claseInfo').style.display = 'none';
-            document.getElementById('qrContainer').style.display = 'none';
-            document.getElementById('iniciarClaseBtn').style.display = 'inline-flex';
-            document.getElementById('terminarClaseBtn').style.display = 'none';
-            document.getElementById('verQrBtn').style.display = 'none';
-            document.getElementById('descargarQrBtn').style.display = 'none';
-            document.getElementById('qrInfo').style.display = 'block';
-        }
-
-        function iniciarTimerClase() {
-            if (!claseActiva) return;
-            
-            const timerElement = document.getElementById('qrTimer');
-            const horaInicio = new Date();
-            const [h, m, s] = claseActiva.hora_inicio.split(':');
-            horaInicio.setHours(parseInt(h), parseInt(m), parseInt(s || 0));
-            
-            function actualizarTimer() {
-                const ahora = new Date();
-                const diff = Math.floor((ahora - horaInicio) / 1000);
-                const horas = Math.floor(diff / 3600);
-                const minutos = Math.floor((diff % 3600) / 60);
-                const segundos = diff % 60;
-                
-                if (horas > 0) {
-                    timerElement.textContent = `⏱️ ${horas}h ${minutos}m`;
-                } else {
-                    timerElement.textContent = `⏱️ ${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
+            detenerTimer() {
+                if (AppState.intervalTimer) {
+                    clearInterval(AppState.intervalTimer);
+                    AppState.intervalTimer = null;
                 }
             }
+        };
+
+        // ===== ACTUALIZACIÓN AUTOMÁTICA =====
+        const AutoUpdateManager = {
+            start() {
+                this.stop();
+                
+                AppState.intervalActualizacion = setInterval(() => {
+                    if (AppState.claseActiva) {
+                        cargarAsistencias(true);
+                    }
+                }, CONFIG.UPDATE_INTERVAL);
+            },
+
+            stop() {
+                if (AppState.intervalActualizacion) {
+                    clearInterval(AppState.intervalActualizacion);
+                    AppState.intervalActualizacion = null;
+                }
+            }
+        };
+
+        // ===== FILTRADO =====
+        const FilterManager = {
+            aplicar() {
+                const busqueda = (document.getElementById('buscarAlumno')?.value || '').toLowerCase().trim();
+                const filtro = AppState.filtroActual;
+                const filas = document.querySelectorAll('#asistenciasBody tr');
+                
+                filas.forEach(fila => {
+                    if (fila.cells.length < 5) {
+                        return;
+                    }
+                    
+                    const matricula = fila.cells[0].textContent.toLowerCase();
+                    const nombre = fila.cells[1].textContent.toLowerCase();
+                    const estado = fila.cells[4].textContent.toLowerCase();
+                    
+                    const coincideBusqueda = busqueda === '' || 
+                        matricula.includes(busqueda) || 
+                        nombre.includes(busqueda);
+                    
+                    let coincideFiltro = true;
+                    
+                    if (filtro === 'presentes') {
+                        coincideFiltro = estado.includes('presente');
+                    } else if (filtro === 'ausentes') {
+                        coincideFiltro = !estado.includes('presente') && !estado.includes('justificada');
+                    } else if (filtro === 'justificados') {
+                        coincideFiltro = estado.includes('justificada');
+                    }
+                    
+                    fila.style.display = coincideBusqueda && coincideFiltro ? '' : 'none';
+                });
+            }
+        };
+
+        // ===== EXPORTACIÓN =====
+        const ExportManager = {
+            toExcel() {
+                const filas = [];
+                const tbody = document.getElementById('asistenciasBody');
+                
+                if (!tbody) {
+                    ToastManager.show('Error al exportar', 'error');
+                    return;
+                }
+                
+                tbody.querySelectorAll('tr').forEach(fila => {
+                    if (fila.cells.length >= 5 && 
+                        !fila.cells[0].textContent.includes('Inicia') && 
+                        !fila.cells[0].textContent.includes('No hay')) {
+                        filas.push({
+                            'Matrícula': fila.cells[0].textContent.trim(),
+                            'Nombre': fila.cells[1].textContent.trim(),
+                            'Hora': fila.cells[2].textContent.trim(),
+                            'Distancia': fila.cells[3].textContent.trim(),
+                            'Estado': fila.cells[4].textContent.replace(/\s+/g, ' ').trim()
+                        });
+                    }
+                });
+                
+                if (filas.length === 0) {
+                    ToastManager.show('No hay datos para exportar', 'warning');
+                    return;
+                }
+                
+                try {
+                    const wb = XLSX.utils.book_new();
+                    const ws = XLSX.utils.json_to_sheet(filas);
+                    
+                    const colWidths = [
+                        { wch: 12 },
+                        { wch: 30 },
+                        { wch: 10 },
+                        { wch: 12 },
+                        { wch: 15 }
+                    ];
+                    ws['!cols'] = colWidths;
+                    
+                    XLSX.utils.book_append_sheet(wb, ws, 'Asistencias');
+                    
+                    const fecha = new Date().toISOString().split('T')[0];
+                    const filename = `asistencias_${fecha}.xlsx`;
+                    
+                    XLSX.writeFile(wb, filename);
+                    ToastManager.show('✅ Excel exportado exitosamente', 'success');
+                } catch (error) {
+                    console.error('Error exportando:', error);
+                    ToastManager.show('Error al exportar archivo', 'error');
+                }
+            }
+        };
+
+        // ===== FUNCIONES PÚBLICAS =====
+        
+        /**
+         * Carga asistencias
+         */
+        async function cargarAsistencias(silenciosa = false) {
+            if (!AppState.claseActiva) {
+                const tbody = document.getElementById('asistenciasBody');
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                                <h3>Inicia una clase para ver asistencias</h3>
+                                <p>Las asistencias aparecerán aquí en tiempo real</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+                return;
+            }
             
-            setInterval(actualizarTimer, 1000);
-            actualizarTimer();
+            if (!silenciosa) {
+                LoadingManager.show();
+            }
+            
+            try {
+                const data = await ApiClient.getAsistencias();
+                
+                if (data.success && data.asistencias) {
+                    TableRenderer.update(data.asistencias);
+                    MapManager.update(data.asistencias);
+                    FilterManager.aplicar();
+                    
+                    if (!silenciosa) {
+                        ToastManager.show('✅ Asistencias actualizadas', 'success');
+                    }
+                } else {
+                    throw new Error(data.message || 'Error al cargar asistencias');
+                }
+            } catch (error) {
+                console.error('Error cargando asistencias:', error);
+                if (!silenciosa) {
+                    ToastManager.show('❌ Error al cargar asistencias', 'error');
+                }
+            } finally {
+                if (!silenciosa) {
+                    LoadingManager.hide();
+                }
+            }
         }
 
+        /**
+         * Inicia clase
+         */
         async function iniciarClase() {
-            mostrarLoading(true);
+            if (!navigator.geolocation) {
+                ToastManager.show('❌ Geolocalización no disponible', 'error');
+                return;
+            }
+
+            LoadingManager.show();
             
             navigator.geolocation.getCurrentPosition(async (position) => {
+                if (!Utils.validarCoordenadas(position.coords.latitude, position.coords.longitude)) {
+                    ToastManager.show('❌ Coordenadas inválidas', 'error');
+                    LoadingManager.hide();
+                    return;
+                }
+
                 try {
-                    const response = await fetch('/api/clase/iniciar', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            profesor_id: usuarioActual.id,
-                            latitud: position.coords.latitude,
-                            longitud: position.coords.longitude
-                        })
+                    const data = await ApiClient.iniciarClase({
+                        profesor_id: AppState.usuarioActual?.id,
+                        latitud: position.coords.latitude,
+                        longitud: position.coords.longitude
                     });
                     
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        claseActiva = data.clase;
-                        mostrarClaseActiva();
-                        mostrarToast('✅ Clase iniciada exitosamente', 'success');
+                    if (data.success && data.clase) {
+                        AppState.claseActiva = data.clase;
+                        ClaseManager.mostrarActiva();
+                        ToastManager.show('✅ Clase iniciada', 'success');
+                        AutoUpdateManager.start();
                     } else {
-                        mostrarToast('❌ ' + data.message, 'error');
+                        ToastManager.show('❌ ' + (data.message || 'Error al iniciar'), 'error');
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    mostrarToast('❌ Error al iniciar clase', 'error');
+                    ToastManager.show('❌ Error al iniciar clase', 'error');
                 } finally {
-                    mostrarLoading(false);
+                    LoadingManager.hide();
                 }
             }, (error) => {
                 console.error('Error geolocalización:', error);
-                mostrarToast('❌ Error al obtener ubicación', 'error');
-                mostrarLoading(false);
+                ToastManager.show('❌ Error obteniendo ubicación', 'error');
+                LoadingManager.hide();
+            }, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
             });
         }
 
+        /**
+         * Termina clase
+         */
         async function terminarClase() {
-            if (!confirm('¿Terminar la clase? El código QR dejará de ser válido.')) return;
+            if (!AppState.claseActiva) {
+                ToastManager.show('❌ No hay clase activa', 'error');
+                return;
+            }
+
+            if (!confirm('¿Estás seguro de terminar la clase?')) {
+                return;
+            }
             
-            mostrarLoading(true);
+            LoadingManager.show();
             
             try {
-                const response = await fetch('/api/clase/terminar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ clase_id: claseActiva.id })
+                const data = await ApiClient.terminarClase({
+                    clase_id: AppState.claseActiva.id
                 });
                 
-                const data = await response.json();
-                
                 if (data.success) {
-                    claseActiva = null;
-                    mostrarClaseInactiva();
-                    mostrarToast('✅ Clase terminada', 'success');
-                    cargarAsistencias();
+                    AppState.claseActiva = null;
+                    ClaseManager.mostrarInactiva();
+                    AutoUpdateManager.stop();
+                    ToastManager.show('✅ Clase terminada', 'success');
                 } else {
-                    mostrarToast('❌ ' + data.message, 'error');
+                    ToastManager.show('❌ ' + (data.message || 'Error al terminar'), 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                mostrarToast('❌ Error al terminar clase', 'error');
+                ToastManager.show('❌ Error al terminar clase', 'error');
             } finally {
-                mostrarLoading(false);
+                LoadingManager.hide();
             }
         }
 
-        
+        /**
+         * Muestra QR en modal
+         */
         function verQR() {
-            if (!claseActiva) {
-                mostrarToast('No hay clase activa', 'error');
+            if (!AppState.claseActiva) {
+                ToastManager.show('No hay clase activa', 'error');
                 return;
             }
-            
-            // Generar timestamp actual para que el QR sea diferente
-            const timestamp = new Date().getTime();
             
             const qrData = {
-                clase_id: claseActiva.id,
-                profesor_id: usuarioActual.id,
-                timestamp: timestamp,  // Timestamp único
-                random: Math.random().toString(36).substring(2, 15) // Random string para mayor unicidad
+                clase_id: AppState.claseActiva.id,
+                profesor_id: AppState.claseActiva.profesor_id,
+                latitud: AppState.claseActiva.latitud_referencia,
+                longitud: AppState.claseActiva.longitud_referencia,
+                timestamp: new Date().toISOString()
             };
             
-            // Codificar los datos como JSON string
-            const qrString = JSON.stringify(qrData);
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(JSON.stringify(qrData))}`;
             
-            // Generar URL del QR con los datos actualizados
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrString)}`;
-            
-            // Verificar si ya existe un modal y eliminarlo
-            const existingModal = document.getElementById('qrModalDynamic');
-            if (existingModal) {
-                existingModal.remove();
+            const qrImage = document.getElementById('qrModalImage');
+            if (qrImage) {
+                qrImage.src = qrUrl;
             }
             
-            // Crear modal con el QR actualizado
-            const modalHtml = `
-                <div class="modal active" id="qrModalDynamic" style="display: flex;">
-                    <div class="modal-content" style="max-width: 400px;">
-                        <div class="modal-header">
-                            <h2><i class="fas fa-qrcode"></i> QR de Clase</h2>
-                            <button class="modal-close" onclick="cerrarQRModal()">&times;</button>
-                        </div>
-                        <div class="modal-body" style="text-align: center;">
-                            <img src="${qrUrl}" style="width: 250px; height: 250px; margin: 20px 0; border-radius: 8px; box-shadow: var(--shadow-lg);">
-                            <p class="qr-info" style="margin: 10px 0;">Escanea para registrar asistencia</p>
-                            <p style="font-size: 0.8rem; color: var(--gray); margin-bottom: 15px;">
-                                <i class="fas fa-clock"></i> Generado: ${new Date().toLocaleTimeString()}
-                            </p>
-                            <div style="display: flex; gap: 10px; justify-content: center;">
-                                <button class="btn btn-primary" onclick="imprimirQR()">
-                                    <i class="fas fa-print"></i> Imprimir
-                                </button>
-                                <button class="btn btn-success" onclick="descargarQR()">
-                                    <i class="fas fa-download"></i> Descargar
-                                </button>
-                            </div>
-                            <button class="btn btn-secondary" style="margin-top: 15px; width: 100%;" onclick="generarNuevoQR()">
-                                <i class="fas fa-sync-alt"></i> Generar nuevo QR
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            const modalContainer = document.createElement('div');
-            modalContainer.innerHTML = modalHtml;
-            document.body.appendChild(modalContainer);
+            ModalManager.open('qrModal');
         }
 
-        // Función para generar un nuevo QR (actualizar)
-        function generarNuevoQR() {
-            if (!claseActiva) {
-                mostrarToast('No hay clase activa', 'error');
+        /**
+         * Descarga QR
+         */
+        function descargarQR() {
+            if (!AppState.claseActiva) {
+                ToastManager.show('No hay clase activa', 'error');
                 return;
             }
             
-            const modal = document.getElementById('qrModalDynamic');
-            if (modal) {
-                modal.remove();
-            }
+            const qrImage = document.getElementById('qrImage');
+            if (!qrImage || !qrImage.src) return;
             
-            verQR(); // Vuelve a generar el QR con nuevo timestamp
+            const link = document.createElement('a');
+            link.href = qrImage.src;
+            link.download = `qr_clase_${AppState.claseActiva.id}_${new Date().getTime()}.png`;
+            link.click();
+            
+            ToastManager.show('✅ QR descargado', 'success');
         }
 
-        // Actualizar la función cerrarQRModal
-        function cerrarQRModal() {
-            const modal = document.getElementById('qrModalDynamic');
-            if (modal) {
-                modal.remove();
-            }
+        /**
+         * Descarga QR del modal
+         */
+        function descargarQRModal() {
+            const qrImage = document.getElementById('qrModalImage');
+            if (!qrImage || !qrImage.src) return;
+            
+            const link = document.createElement('a');
+            link.href = qrImage.src;
+            link.download = `qr_clase_${AppState.claseActiva?.id || 'activa'}_${new Date().getTime()}.png`;
+            link.click();
+            
+            ToastManager.show('✅ QR descargado', 'success');
         }
 
-        // Actualizar funciones de imprimir y descargar para usar la imagen actual
+        /**
+         * Imprime QR
+         */
         function imprimirQR() {
-            const img = document.querySelector('#qrModalDynamic img');
-            if (!img) return;
+            const img = document.querySelector('#qrModal img');
+            if (!img || !img.src) return;
             
             const ventana = window.open('', '_blank');
             ventana.document.write(`
+                <!DOCTYPE html>
                 <html>
                     <head>
                         <title>QR Clase</title>
@@ -1671,407 +2264,202 @@
                         </style>
                     </head>
                     <body>
-                        <img src="${img.src}">
-                        <script>window.print();</script>
+                        <img src="${Utils.escapeHtml(img.src)}" alt="QR de clase">
+                        <script>window.print();<\/script>
                     </body>
                 </html>
             `);
             ventana.document.close();
         }
 
-        function descargarQR() {
-            const img = document.querySelector('#qrModalDynamic img');
-            if (!img) return;
-            
-            const link = document.createElement('a');
-            link.href = img.src;
-            link.download = `qr_clase_${claseActiva?.id || 'activa'}_${new Date().getTime()}.png`;
-            link.click();
-        }
-
-        // ===== FUNCIONES DE ASISTENCIAS =====
-        async function cargarAsistencias() {
-            if (!claseActiva) {
-                document.getElementById('asistenciasBody').innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center" style="padding: 40px;">
-                            <i class="fas fa-info-circle" style="font-size: 2rem; color: var(--gray);"></i>
-                            <p style="margin-top: 12px; color: var(--gray);">Inicia una clase para ver asistencias</p>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/api/clase/${claseActiva.id}/asistencias`);
-                const data = await response.json();
-                console.log("📥 Datos recibidos:", data); // 👈 DEBUG
-                
-                if (data.success) {
-                    actualizarTablaAsistencias(data.asistencias);
-                    actualizarEstadisticas(data.asistencias); // 👈 Pasamos data.asistencias
-                    actualizarMapa(data.asistencias);
-                    actualizarActividadReciente(data.asistencias);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        }
-
-        function actualizarTablaAsistencias(asistencias) {
-            const tbody = document.getElementById('asistenciasBody');
-            
-            if (!asistencias || asistencias.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center" style="padding: 40px;">
-                            <i class="fas fa-info-circle" style="font-size: 2rem; color: var(--gray);"></i>
-                            <p style="margin-top: 12px; color: var(--gray);">Aún no hay asistencias registradas</p>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            tbody.innerHTML = '';
-            
-            asistencias.forEach(asistencia => {
-                const tr = document.createElement('tr');
-                
-                const fecha = new Date(asistencia.fecha_escaneo);
-                const horaStr = fecha.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-                
-                const distancia = asistencia.distancia_metros;
-                const distanciaClass = distancia <= 7 ? 'text-success' : 'text-warning';
-                
-                let estadoClass = 'badge-success';
-                let estadoIcon = 'fa-check';
-                let estadoText = 'Presente';
-                
-                if (asistencia.justificada) {
-                    estadoClass = 'badge-warning';
-                    estadoIcon = 'fa-file-medical';
-                    estadoText = 'Justificada';
-                } else if (!asistencia.valida) {
-                    estadoClass = 'badge-danger';
-                    estadoIcon = 'fa-exclamation';
-                    estadoText = 'Fuera de rango';
-                }
-                
-                tr.innerHTML = `
-                    <td>${asistencia.matricula || 'N/A'}</td>
-                    <td><strong>${asistencia.nombre || 'Desconocido'}</strong></td>
-                    <td>${horaStr}</td>
-                    <td class="${distanciaClass}">${distancia ? distancia.toFixed(2) + 'm' : 'N/A'}</td>
-                    <td><span class="badge ${estadoClass}"><i class="fas ${estadoIcon}"></i> ${estadoText}</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-warning" onclick="abrirModalJustificar('${asistencia.alumno_id}', '${asistencia.nombre}', '${asistencia.fecha_escaneo}', '${asistencia.id}')">
-                            <i class="fas fa-file-medical"></i>
-                        </button>
-                    </td>
-                `;
-                
-                tbody.appendChild(tr);
-            });
-        }
-
-        function actualizarEstadisticas(asistencias) {
-            if (!asistencias) return;
-            
-            const presentes = asistencias.filter(a => a.valida && !a.justificada).length;
-            const justificados = asistencias.filter(a => a.justificada).length;
-            const total = asistencias.length;
-            
-            document.getElementById('totalPresentes').textContent = presentes + justificados;
-            document.getElementById('totalAusentes').textContent = total - (presentes + justificados);
-            document.getElementById('totalAlumnos').textContent = total;
-            document.getElementById('claseAsistencias').innerHTML = `<i class="fas fa-users"></i> ${presentes + justificados} asistencias`;
-        }
-
-        function filtrarAsistencias() {
-            const busqueda = document.getElementById('buscarAlumno').value.toLowerCase();
-            const filtro = document.getElementById('filtroAsistencia').value;
-            const filas = document.querySelectorAll('#asistenciasBody tr');
-            
-            filas.forEach(fila => {
-                if (fila.cells.length < 5) return;
-                
-                const matricula = fila.cells[0].textContent.toLowerCase();
-                const nombre = fila.cells[1].textContent.toLowerCase();
-                const estado = fila.cells[4].textContent.toLowerCase();
-                
-                const coincideBusqueda = matricula.includes(busqueda) || nombre.includes(busqueda);
-                let coincideFiltro = true;
-                
-                if (filtro === 'presentes') {
-                    coincideFiltro = estado.includes('presente');
-                } else if (filtro === 'ausentes') {
-                    coincideFiltro = !estado.includes('presente') && !estado.includes('justificada');
-                } else if (filtro === 'justificados') {
-                    coincideFiltro = estado.includes('justificada');
-                }
-                
-                fila.style.display = coincideBusqueda && coincideFiltro ? '' : 'none';
-            });
-        }
-
-        // ===== JUSTIFICACIÓN =====
+        /**
+         * Abre modal de justificación
+         */
         function abrirModalJustificar(alumnoId, nombreAlumno, fecha, asistenciaId) {
-            document.getElementById('justificarAlumnoId').value = alumnoId;
-            document.getElementById('justificarAsistenciaId').value = asistenciaId;
-            document.getElementById('justificarAlumnoNombre').textContent = nombreAlumno;
-            document.getElementById('justificarFecha').textContent = new Date(fecha).toLocaleString('es-MX');
-            document.getElementById('motivoJustificacion').value = '';
-            document.getElementById('comentarioJustificacion').value = '';
+            const inputAlumnoId = document.getElementById('justificarAlumnoId');
+            const inputAsistenciaId = document.getElementById('justificarAsistenciaId');
+            const textoNombre = document.getElementById('justificarAlumnoNombre');
+            const textoFecha = document.getElementById('justificarFecha');
+            const selectMotivo = document.getElementById('motivoJustificacion');
+            const textareaComentario = document.getElementById('comentarioJustificacion');
             
-            document.getElementById('justificarModal').classList.add('active');
+            if (inputAlumnoId) inputAlumnoId.value = alumnoId;
+            if (inputAsistenciaId) inputAsistenciaId.value = asistenciaId;
+            if (textoNombre) textoNombre.textContent = nombreAlumno;
+            if (textoFecha) textoFecha.textContent = new Date(fecha).toLocaleString('es-MX');
+            if (selectMotivo) selectMotivo.value = '';
+            if (textareaComentario) textareaComentario.value = '';
+            
+            ModalManager.open('justificarModal');
         }
 
+        /**
+         * Justifica falta
+         */
         async function justificarFalta() {
-            const motivo = document.getElementById('motivoJustificacion').value;
+            const motivo = document.getElementById('motivoJustificacion')?.value;
             
             if (!motivo) {
-                mostrarToast('Selecciona un motivo', 'warning');
+                ToastManager.show('Selecciona un motivo', 'warning');
                 return;
             }
             
             const data = {
-                asistencia_id: document.getElementById('justificarAsistenciaId').value,
-                alumno_id: document.getElementById('justificarAlumnoId').value,
+                asistencia_id: document.getElementById('justificarAsistenciaId')?.value,
+                alumno_id: document.getElementById('justificarAlumnoId')?.value,
                 motivo: motivo,
-                comentario: document.getElementById('comentarioJustificacion').value
+                comentario: document.getElementById('comentarioJustificacion')?.value || ''
             };
             
-            mostrarLoading(true);
+            LoadingManager.show();
             
             try {
-                const response = await fetch('/api/asistencia/justificar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                
-                const result = await response.json();
+                const result = await ApiClient.justificarFalta(data);
                 
                 if (result.success) {
-                    mostrarToast('✅ Falta justificada exitosamente', 'success');
-                    cerrarModal('justificarModal');
-                    cargarAsistencias();
+                    ToastManager.show('✅ Falta justificada exitosamente', 'success');
+                    ModalManager.close('justificarModal');
+                    await cargarAsistencias();
                 } else {
-                    mostrarToast('❌ ' + result.message, 'error');
+                    ToastManager.show('❌ ' + (result.message || 'Error al justificar'), 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                mostrarToast('❌ Error al justificar', 'error');
+                ToastManager.show('❌ Error al justificar', 'error');
             } finally {
-                mostrarLoading(false);
+                LoadingManager.hide();
             }
         }
 
-        // ===== MAPA =====
-        function inicializarMapa() {
-            if (!mapa) {
-                mapa = L.map('mapa').setView([19.4326, -99.1332], 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap'
-                }).addTo(mapa);
-            }
-        }
-
-        function actualizarMapa(asistencias) {
-            if (!asistencias || asistencias.length === 0) {
-                document.getElementById('mapaContainer').style.display = 'none';
-                return;
-            }
+        /**
+         * Cambia filtro
+         */
+        function cambiarFiltro(filtro) {
+            AppState.filtroActual = filtro;
             
-            const conUbicacion = asistencias.filter(a => a.latitud_escaneo && a.longitud_escaneo);
-            
-            if (conUbicacion.length === 0) {
-                document.getElementById('mapaContainer').style.display = 'none';
-                return;
-            }
-            
-            document.getElementById('mapaContainer').style.display = 'block';
-            inicializarMapa();
-            
-            marcadores.forEach(m => mapa.removeLayer(m));
-            marcadores = [];
-            
-            conUbicacion.forEach(asistencia => {
-                const marcador = L.marker([asistencia.latitud_escaneo, asistencia.longitud_escaneo])
-                    .bindPopup(`
-                        <b>${asistencia.nombre}</b><br>
-                        Matrícula: ${asistencia.matricula}<br>
-                        Hora: ${new Date(asistencia.fecha_escaneo).toLocaleTimeString('es-MX')}<br>
-                        Distancia: ${asistencia.distancia_metros?.toFixed(2)}m
-                    `);
-                marcador.addTo(mapa);
-                marcadores.push(marcador);
-            });
-            
-            if (marcadores.length > 0) {
-                const grupo = L.featureGroup(marcadores);
-                mapa.fitBounds(grupo.getBounds().pad(0.1));
-            }
-        }
-
-        // ===== ACTIVIDAD RECIENTE =====
-        function actualizarActividadReciente(asistencias) {
-            const container = document.getElementById('actividadReciente');
-            
-            if (!asistencias || asistencias.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: var(--gray);">
-                        <i class="fas fa-clock" style="font-size: 2.5rem; margin-bottom: 12px;"></i>
-                        <p>No hay actividad reciente</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = '';
-            
-            const recientes = asistencias.slice(0, 10);
-            recientes.forEach(act => {
-                const item = document.createElement('div');
-                item.className = 'actividad-item';
-                
-                const fecha = new Date(act.fecha_escaneo);
-                const horaStr = fecha.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-                const fechaStr = fecha.toLocaleDateString('es-MX');
-                
-                let tipo = 'success';
-                let icono = 'fa-check';
-                let mensaje = 'Asistencia registrada';
-                
-                if (act.justificada) {
-                    tipo = 'warning';
-                    icono = 'fa-file-medical';
-                    mensaje = 'Falta justificada';
-                } else if (!act.valida) {
-                    tipo = 'warning';
-                    icono = 'fa-exclamation-triangle';
-                    mensaje = 'Escaneo fuera de rango';
+            // Actualizar botones
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-filter') === filtro) {
+                    btn.classList.add('active');
+                    btn.setAttribute('aria-current', 'true');
+                } else {
+                    btn.removeAttribute('aria-current');
                 }
-                
-                item.innerHTML = `
-                    <div class="actividad-icono ${tipo}">
-                        <i class="fas ${icono}"></i>
-                    </div>
-                    <div class="actividad-detalle">
-                        <div class="actividad-titulo">${act.nombre} - ${mensaje}</div>
-                        <div class="actividad-tiempo">
-                            <i class="far fa-clock"></i> ${fechaStr} ${horaStr}
-                        </div>
-                    </div>
-                `;
-                
-                container.appendChild(item);
             });
+            
+            FilterManager.aplicar();
         }
 
-        // ===== EXPORTACIÓN =====
+        /**
+         * Filtra asistencias
+         */
+        const filtrarAsistencias = Utils.debounce(() => {
+            FilterManager.aplicar();
+        }, CONFIG.DEBOUNCE_DELAY);
+
+        /**
+         * Exporta a Excel
+         */
         function exportarExcel() {
-            const asistencias = [];
-            document.querySelectorAll('#asistenciasBody tr').forEach(fila => {
-                if (fila.cells.length >= 5 && !fila.cells[0].textContent.includes('Inicia') && !fila.cells[0].textContent.includes('Cargando')) {
-                    asistencias.push({
-                        Matrícula: fila.cells[0].textContent,
-                        Nombre: fila.cells[1].textContent,
-                        Hora: fila.cells[2].textContent,
-                        Distancia: fila.cells[3].textContent,
-                        Estado: fila.cells[4].textContent.replace(/\s+/g, ' ').trim()
+            ExportManager.toExcel();
+        }
+
+        /**
+         * Cierra modal
+         */
+        function cerrarModal(modalId) {
+            ModalManager.close(modalId);
+        }
+
+        /**
+         * Toggle sidebar
+         */
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('active');
+            }
+        }
+
+        /**
+         * Cierra sesión
+         */
+        function cerrarSesion() {
+            SessionManager.cerrar();
+        }
+
+        /**
+         * Carga datos del profesor
+         */
+        function cargarDatosProfesor() {
+            if (!AppState.usuarioActual) return;
+            
+            const nombre = document.getElementById('profesorNombre');
+            const avatar = document.getElementById('profesorAvatar');
+            
+            if (nombre) {
+                nombre.textContent = AppState.usuarioActual.nombre || 'Profesor';
+            }
+            
+            if (avatar && AppState.usuarioActual.nombre) {
+                const iniciales = AppState.usuarioActual.nombre
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase();
+                avatar.textContent = iniciales || 'PR';
+            }
+        }
+
+        // ===== INICIALIZACIÓN =====
+        function init() {
+            // Verificar sesión
+            if (!SessionManager.verificar()) return;
+            
+            // Cargar datos del profesor
+            cargarDatosProfesor();
+            
+            // Verificar clase activa
+            ClaseManager.verificar();
+            
+            // Iniciar actualización automática
+            AutoUpdateManager.start();
+            
+            // Event listeners para cerrar modales
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('active');
+                    }
+                });
+            });
+            
+            // Escape key para cerrar modales
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal.active').forEach(modal => {
+                        modal.classList.remove('active');
                     });
                 }
             });
             
-            if (asistencias.length === 0) {
-                mostrarToast('No hay datos para exportar', 'warning');
-                return;
-            }
-            
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.json_to_sheet(asistencias);
-            XLSX.utils.book_append_sheet(wb, ws, 'Asistencias');
-            
-            const fecha = new Date().toISOString().split('T')[0];
-            XLSX.writeFile(wb, `asistencias_${fecha}.xlsx`);
-            mostrarToast('✅ Excel exportado exitosamente', 'success');
-        }
-
-        // ===== UTILIDADES =====
-        function iniciarActualizacionAutomatica() {
-            if (intervalActualizacion) {
-                clearInterval(intervalActualizacion);
-            }
-            intervalActualizacion = setInterval(() => {
-                if (claseActiva) {
-                    cargarAsistencias();
-                }
-            }, 10000); // Cada 10 segundos
-        }
-
-        function mostrarLoading(mostrar) {
-            document.getElementById('loadingOverlay').classList.toggle('active', mostrar);
-        }
-
-        function mostrarToast(mensaje, tipo = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${tipo}`;
-            
-            const iconClass = tipo === 'success' ? 'fa-check-circle' : 
-                             tipo === 'error' ? 'fa-exclamation-circle' : 
-                             'fa-info-circle';
-            
-            toast.innerHTML = `
-                <i class="fas ${iconClass}"></i>
-                <span>${mensaje}</span>
-                <button onclick="this.parentElement.remove()">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            
-            container.appendChild(toast);
-            
-            setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.remove();
-                }
-            }, 4000);
-        }
-
-        function cerrarModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
-        }
-
-        function cerrarSesion() {
-            if (confirm('¿Cerrar sesión?')) {
-                localStorage.clear();
-                window.location.href = '/';
-            }
-        }
-
-        // Cerrar modal al hacer clic fuera
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.classList.remove('active');
-                }
+            // Limpiar al salir
+            window.addEventListener('beforeunload', () => {
+                AutoUpdateManager.stop();
+                ClaseManager.detenerTimer();
             });
-        });
+            
+            console.log('✅ Aplicación inicializada correctamente');
+        }
 
-        // Limpiar intervalo al salir
-        window.addEventListener('beforeunload', function() {
-            if (intervalActualizacion) {
-                clearInterval(intervalActualizacion);
-            }
-        });
+        // Inicializar cuando el DOM esté listo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
     </script>
 </body>
 </html>
