@@ -1619,10 +1619,11 @@
             try {
                 const response = await fetch(`/api/clase/${claseActiva.id}/asistencias`);
                 const data = await response.json();
+                console.log("📥 Datos recibidos:", data); // 👈 DEBUG
                 
                 if (data.success) {
                     actualizarTablaAsistencias(data.asistencias);
-                    actualizarEstadisticas(data.asistencias);
+                    actualizarEstadisticas(data.asistencias); // 👈 Pasamos data.asistencias
                     actualizarMapa(data.asistencias);
                     actualizarActividadReciente(data.asistencias);
                 }
@@ -1696,9 +1697,9 @@
             const total = asistencias.length;
             
             document.getElementById('totalPresentes').textContent = presentes + justificados;
-            document.getElementById('totalAusentes').textContent = '?';
+            document.getElementById('totalAusentes').textContent = total - (presentes + justificados);
             document.getElementById('totalAlumnos').textContent = total;
-            document.getElementById('claseAsistencias').textContent = `${presentes + justificados} asistencias`;
+            document.getElementById('claseAsistencias').innerHTML = `<i class="fas fa-users"></i> ${presentes + justificados} asistencias`;
         }
 
         function filtrarAsistencias() {
