@@ -1,4 +1,4 @@
-<!-- templates/dashboard_alumno.html - VERSIÓN 100% FUNCIONAL -->
+<!-- templates/dashboard_alumno.html - VERSIÓN PRODUCCIÓN CON CONFIRMACIÓN -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -512,7 +512,7 @@
             margin-bottom: 16px;
         }
 
-        /* ===== CONFIRMATION MODAL ===== */
+        /* ===== CONFIRMATION MODAL (NUEVO) ===== */
         .confirmation-icon {
             width: 80px;
             height: 80px;
@@ -936,7 +936,7 @@
         </div>
     </div>
 
-    <!-- CONFIRMATION MODAL -->
+    <!-- CONFIRMATION MODAL (NUEVO) -->
     <div id="confirmacionModal" class="modal">
         <div class="modal-content">
             <div class="confirmation-icon">
@@ -949,8 +949,12 @@
             
             <div class="class-info-card" id="classInfoCard">
                 <div class="info-row">
-                    <span class="info-label">📚 Clase ID</span>
-                    <span class="info-value" id="infoClaseId">Cargando...</span>
+                    <span class="info-label">📚 Materia</span>
+                    <span class="info-value" id="infoMateria">Cargando...</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">👨‍🏫 Profesor</span>
+                    <span class="info-value" id="infoProfesor">Cargando...</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">📅 Fecha</span>
@@ -959,6 +963,10 @@
                 <div class="info-row">
                     <span class="info-label">🕐 Hora</span>
                     <span class="info-value" id="infoHora">Cargando...</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">📍 Ubicación</span>
+                    <span class="info-value" id="infoUbicacion">No disponible</span>
                 </div>
             </div>
 
@@ -1013,97 +1021,154 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- Scripts -->
-    <script src="https://unpkg.com/html5-qrcode@2.3.4/html5-qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <script>
         // ===== VARIABLES GLOBALES =====
         let html5QrCode = null;
         let scannerActivo = false;
         let intervaloActualizacion = null;
         let usuarioId = localStorage.getItem('usuario_id');
-        let telefonoId = localStorage.getItem('telefono_id');
         let qrDataPendiente = null;
-        let userData = JSON.parse(localStorage.getItem('user_data') || '{}');
 
-        // ===== INICIALIZACIÓN - VERSIÓN SIMPLIFICADA Y FUNCIONAL =====
+        // ===== INICIALIZACIÓN =====
         document.addEventListener('DOMContentLoaded', function() {
             console.log("🚀 Iniciando dashboard alumno...");
             
-            // SOLO VERIFICAR QUE HAY DATOS EN LOCALSTORAGE - NADA MÁS
-            if (!telefonoId || !usuarioId || !userData.nombre) {
+            // Verificar autenticación
+            const telefonoId = localStorage.getItem('telefono_id');
+            
+            if (!telefonoId || !usuarioId) {
                 console.error("❌ No hay sesión válida");
                 window.location.href = '/';
                 return;
             }
             
-            // Cargar datos directamente desde localStorage
-            cargarDatosUsuarioLocal();
-            cargarEstadisticasLocales();
-            cargarActividadLocal();
+            // Cargar datos iniciales
+            cargarDatosUsuario();
+            cargarEstadisticasReales();
+            cargarActividadReciente();
             actualizarFecha();
             
-            // Actualizar cada 30 segundos (simulado)
+            // Actualizar cada 30 segundos
             intervaloActualizacion = setInterval(() => {
-                cargarEstadisticasLocales();
-                cargarActividadLocal();
+                cargarEstadisticasReales();
+                cargarActividadReciente();
             }, 30000);
         });
 
-        // ===== CARGA DE DATOS DESDE LOCALSTORAGE (SIN FETCH) =====
-        function cargarDatosUsuarioLocal() {
-            document.getElementById('userName').textContent = userData.nombre || 'Alumno';
-            
-            if (userData.nombre) {
-                const iniciales = userData.nombre.split(' ')
-                    .map(n => n[0])
-                    .join('')
-                    .substring(0, 2)
-                    .toUpperCase();
-                document.getElementById('userAvatar').textContent = iniciales;
-            }
-            
-            const deviceId = telefonoId ? telefonoId.substring(0, 8) : 'XXXX';
-            document.getElementById('deviceId').textContent = `ID: ${deviceId}`;
-        }
-
-        function cargarEstadisticasLocales() {
-            // Valores simulados para demostración
-            document.getElementById('statTotal').textContent = '20';
-            document.getElementById('statPresent').textContent = '15';
-            document.getElementById('statPercentage').textContent = '75%';
-        }
-
-        function cargarActividadLocal() {
-            const lista = document.getElementById('activityList');
-            
-            // Actividad simulada
-            const actividades = [
-                { fecha: new Date().toISOString(), estado: 'Presente', materia: 'Matemáticas' },
-                { fecha: new Date(Date.now() - 86400000).toISOString(), estado: 'Presente', materia: 'Física' },
-                { fecha: new Date(Date.now() - 172800000).toISOString(), estado: 'Ausente', materia: 'Programación' }
-            ];
-            
-            lista.innerHTML = actividades.map(act => {
-                const icon = act.estado === 'Presente' ? 'check' : 'times';
-                const clase = act.estado === 'Presente' ? 'present' : 'absent';
-                const fecha = new Date(act.fecha).toLocaleDateString('es-MX', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit'
+        // ===== CARGA DE DATOS =====
+        async function cargarDatosUsuario() {
+            try {
+                const response = await fetch('/api/usuario-info', {
+                    headers: {
+                        'telefono-id': localStorage.getItem('telefono_id')
+                    }
                 });
                 
-                return `
-                    <div class="activity-item">
-                        <div class="activity-icon ${clase}">
-                            <i class="fas fa-${icon}"></i>
+                if (!response.ok) throw new Error('Error al cargar datos');
+                
+                const data = await response.json();
+                
+                if (data.nombre) {
+                    document.getElementById('userName').textContent = data.nombre;
+                    const iniciales = data.nombre.split(' ')
+                        .map(n => n[0])
+                        .join('')
+                        .substring(0, 2)
+                        .toUpperCase();
+                    document.getElementById('userAvatar').textContent = iniciales;
+                }
+                
+                const deviceId = localStorage.getItem('telefono_id').substring(0, 8);
+                document.getElementById('deviceId').textContent = `ID: ${deviceId}`;
+                
+            } catch (error) {
+                console.error('Error cargando usuario:', error);
+                document.getElementById('userName').textContent = 'Alumno';
+            }
+        }
+
+        async function cargarEstadisticasReales() {
+            try {
+                const response = await fetch('/api/estadisticas-alumno', {
+                    headers: {
+                        'telefono-id': localStorage.getItem('telefono_id')
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Error al cargar estadísticas');
+                
+                const data = await response.json();
+                
+                document.getElementById('statTotal').textContent = data.total_clases || 0;
+                document.getElementById('statPresent').textContent = data.asistencias || 0;
+                
+                const porcentaje = data.total_clases > 0 
+                    ? Math.round((data.asistencias / data.total_clases) * 100)
+                    : 0;
+                document.getElementById('statPercentage').textContent = porcentaje + '%';
+                
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+            }
+        }
+
+        async function cargarActividadReciente() {
+            try {
+                const response = await fetch('/api/actividad-alumno', {
+                    headers: {
+                        'telefono-id': localStorage.getItem('telefono_id')
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Error al cargar actividad');
+                
+                const data = await response.json();
+                
+                const lista = document.getElementById('activityList');
+                
+                if (!data.actividades || data.actividades.length === 0) {
+                    lista.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>No hay actividad reciente</p>
                         </div>
-                        <div class="activity-info">
-                            <div class="activity-title">${act.materia}</div>
-                            <div class="activity-meta">${fecha} · ${act.estado}</div>
+                    `;
+                    return;
+                }
+                
+                lista.innerHTML = data.actividades.map(act => {
+                    const icon = act.estado === 'Presente' ? 'check' : 'times';
+                    const clase = act.estado === 'Presente' ? 'present' : 'absent';
+                    const fecha = new Date(act.fecha).toLocaleDateString('es-MX', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    return `
+                        <div class="activity-item">
+                            <div class="activity-icon ${clase}">
+                                <i class="fas fa-${icon}"></i>
+                            </div>
+                            <div class="activity-info">
+                                <div class="activity-title">${act.materia || 'Clase'}</div>
+                                <div class="activity-meta">${fecha} · ${act.estado}</div>
+                            </div>
                         </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error cargando actividad:', error);
+                document.getElementById('activityList').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Error al cargar actividad</p>
                     </div>
                 `;
-            }).join('');
+            }
         }
 
         function actualizarFecha() {
@@ -1123,30 +1188,21 @@
             const modal = document.getElementById('scannerModal');
             modal.classList.add('active');
             
-            setTimeout(async () => {
-                try {
-                    await iniciarScanner();
-                } catch (error) {
-                    console.error("Error al iniciar scanner:", error);
-                    mostrarErrorCamara();
-                }
-            }, 300);
+            try {
+                await iniciarScanner();
+            } catch (error) {
+                console.error("Error al iniciar scanner:", error);
+                mostrarErrorCamara();
+            }
         }
 
         async function iniciarScanner() {
             try {
                 if (html5QrCode) {
-                    try {
-                        await html5QrCode.stop();
-                        await html5QrCode.clear();
-                    } catch (e) {
-                        console.log("Error limpiando scanner previo:", e);
-                    }
+                    await html5QrCode.stop();
+                    html5QrCode.clear();
                     html5QrCode = null;
                 }
-                
-                const readerElement = document.getElementById('reader');
-                readerElement.innerHTML = '';
                 
                 html5QrCode = new Html5Qrcode("reader");
                 
@@ -1183,20 +1239,16 @@
                         onScanError
                     );
                     
-                    scannerActivo = true;
-                    console.log("✅ Scanner iniciado correctamente");
-                    
                 } catch (cameraError) {
-                    console.log("Usando modo environment:", cameraError);
                     await html5QrCode.start(
                         { facingMode: "environment" },
                         config,
                         onScanSuccess,
                         onScanError
                     );
-                    scannerActivo = true;
-                    console.log("✅ Scanner iniciado en modo environment");
                 }
+                
+                scannerActivo = true;
                 
             } catch (error) {
                 console.error("Error iniciando scanner:", error);
@@ -1216,36 +1268,35 @@
         }
 
         function onScanSuccess(decodedText, decodedResult) {
-            console.log("✅ QR escaneado:", decodedText);
-            
+            // Vibrar si es posible
             if (navigator.vibrate) {
                 navigator.vibrate(200);
             }
             
+            // Detener scanner
             detenerScanner();
             cerrarScanner();
             
-            setTimeout(() => {
-                procesarQR(decodedText);
-            }, 300);
+            // Procesar el QR
+            procesarQR(decodedText);
         }
 
         function onScanError(errorMessage) {
             // Solo ignoramos errores normales
         }
 
-        async function detenerScanner() {
+        function detenerScanner() {
             if (html5QrCode && scannerActivo) {
-                try {
-                    await html5QrCode.stop();
-                    await html5QrCode.clear();
-                    html5QrCode = null;
-                    scannerActivo = false;
-                    console.log("✅ Scanner detenido");
-                } catch (err) {
-                    console.error("Error deteniendo scanner:", err);
-                    scannerActivo = false;
-                }
+                html5QrCode.stop()
+                    .then(() => {
+                        html5QrCode.clear();
+                        html5QrCode = null;
+                        scannerActivo = false;
+                    })
+                    .catch(err => {
+                        console.error("Error deteniendo scanner:", err);
+                        scannerActivo = false;
+                    });
             }
         }
 
@@ -1255,39 +1306,41 @@
             document.getElementById('reader').innerHTML = '';
         }
 
-        // ===== PROCESAR QR - VERSIÓN SIMPLIFICADA =====
+        // ===== NUEVO: PROCESAR QR Y MOSTRAR CONFIRMACIÓN =====
         async function procesarQR(textoQR) {
             mostrarLoading(true);
             
             try {
+                // Intentar parsear el QR
                 let qrInfo;
                 try {
                     qrInfo = JSON.parse(textoQR);
-                    console.log("📦 Datos del QR:", qrInfo);
                 } catch (e) {
-                    console.error("Error parseando QR:", e);
                     mostrarToast('❌ Código QR inválido', 'error');
                     mostrarLoading(false);
                     return;
                 }
                 
-                if (!qrInfo.clase_id) {
-                    mostrarToast('❌ QR no contiene ID de clase', 'error');
-                    mostrarLoading(false);
-                    return;
-                }
-                
+                // Guardar datos del QR
                 qrDataPendiente = {
                     texto: textoQR,
                     clase_id: qrInfo.clase_id,
-                    timestamp: qrInfo.timestamp || Date.now()
+                    timestamp: qrInfo.timestamp
                 };
                 
-                console.log("📝 QR pendiente:", qrDataPendiente);
+                // Obtener información de la clase
+                const response = await fetch(`/api/clase/${qrInfo.clase_id}`);
                 
-                // Actualizar modal con datos del QR
+                if (!response.ok) {
+                    throw new Error('No se pudo obtener información de la clase');
+                }
+                
+                const claseData = await response.json();
+                
+                // Actualizar modal de confirmación
                 const ahora = new Date();
-                document.getElementById('infoClaseId').textContent = qrInfo.clase_id;
+                document.getElementById('infoMateria').textContent = claseData.materia || 'Clase';
+                document.getElementById('infoProfesor').textContent = claseData.profesor_nombre || 'Profesor';
                 document.getElementById('infoFecha').textContent = ahora.toLocaleDateString('es-MX', {
                     weekday: 'long',
                     year: 'numeric',
@@ -1298,8 +1351,12 @@
                     hour: '2-digit',
                     minute: '2-digit'
                 });
+                document.getElementById('infoUbicacion').textContent = 
+                    claseData.latitud_referencia ? 'Disponible' : 'No requerida';
                 
                 mostrarLoading(false);
+                
+                // Mostrar modal de confirmación
                 document.getElementById('confirmacionModal').classList.add('active');
                 
             } catch (error) {
@@ -1309,15 +1366,16 @@
             }
         }
 
-        // ===== CONFIRMAR Y ENVIAR ASISTENCIA - SIMPLIFICADO =====
+        // ===== NUEVO: CONFIRMAR Y ENVIAR ASISTENCIA =====
         async function confirmarYEnviar() {
-            document.getElementById('confirmacionModal').classList.remove('active');
+            cerrarConfirmacion();
             mostrarLoading(true);
             
             try {
                 const compartirUbicacion = document.getElementById('compartirUbicacion').checked;
                 let latitud = null, longitud = null;
                 
+                // Obtener ubicación si el usuario aceptó
                 if (compartirUbicacion) {
                     try {
                         const position = await new Promise((resolve, reject) => {
@@ -1331,36 +1389,30 @@
                                     clearTimeout(timeout);
                                     reject(err);
                                 },
-                                { timeout: 5000, maximumAge: 60000 }
+                                {
+                                    timeout: 5000,
+                                    maximumAge: 60000,
+                                    enableHighAccuracy: false
+                                }
                             );
                         });
                         
                         latitud = position.coords.latitude;
                         longitud = position.coords.longitude;
-                        console.log("📍 Ubicación obtenida:", latitud, longitud);
                         
                     } catch (geoError) {
-                        console.log("Ubicación no disponible");
+                        console.log("Ubicación no disponible:", geoError.message);
+                        // Continuamos sin ubicación
                     }
                 }
                 
-                if (!qrDataPendiente) {
-                    throw new Error('No hay datos de QR pendientes');
-                }
-                
-                console.log("📤 Enviando asistencia:", {
-                    qr_data: qrDataPendiente.texto,
-                    telefono_id: telefonoId,
-                    usuario_id: usuarioId
-                });
-                
-                // SOLO HACER FETCH AL ENDPOINT QUE SABEMOS QUE EXISTE
+                // Enviar asistencia
                 const response = await fetch('/api/registrar-asistencia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         qr_data: qrDataPendiente.texto,
-                        telefono_id: telefonoId,
+                        telefono_id: localStorage.getItem('telefono_id'),
                         usuario_id: usuarioId,
                         latitud: latitud,
                         longitud: longitud
@@ -1368,19 +1420,18 @@
                 });
                 
                 const data = await response.json();
-                console.log("📥 Respuesta del servidor:", data);
                 
                 mostrarLoading(false);
                 
                 if (data.success) {
+                    // Mostrar modal de éxito
                     mostrarSuccessModal(data);
                     
-                    setTimeout(() => {
-                        cargarEstadisticasLocales();
-                        cargarActividadLocal();
+                    // Recargar datos después de un momento
+                    setTimeout(async () => {
+                        await cargarEstadisticasReales();
+                        await cargarActividadReciente();
                     }, 1000);
-                    
-                    qrDataPendiente = null;
                     
                 } else {
                     mostrarToast('❌ ' + (data.message || 'Error al registrar asistencia'), 'error');
@@ -1389,16 +1440,7 @@
             } catch (error) {
                 console.error('Error:', error);
                 mostrarLoading(false);
-                
-                // SIMULAR ÉXITO PARA DEMOSTRACIÓN (QUITAR EN PRODUCCIÓN REAL)
-                mostrarToast('⚠️ Modo demostración - Asistencia simulada', 'info');
-                setTimeout(() => {
-                    mostrarSuccessModal({ 
-                        success: true, 
-                        materia: 'Clase', 
-                        message: 'Asistencia simulada' 
-                    });
-                }, 500);
+                mostrarToast('❌ Error de conexión', 'error');
             }
         }
 
@@ -1426,7 +1468,7 @@
             
             details.innerHTML = `
                 <div class="success-detail-row">
-                    <span class="success-detail-label">📚 Clase</span>
+                    <span class="success-detail-label">📚 Materia</span>
                     <span class="success-detail-value">${data.materia || 'Clase'}</span>
                 </div>
                 <div class="success-detail-row">
@@ -1437,6 +1479,12 @@
                     <span class="success-detail-label">🕐 Hora</span>
                     <span class="success-detail-value">${hora}</span>
                 </div>
+                ${data.profesor ? `
+                <div class="success-detail-row">
+                    <span class="success-detail-label">👨‍🏫 Profesor</span>
+                    <span class="success-detail-value">${data.profesor}</span>
+                </div>
+                ` : ''}
                 ${data.distancia ? `
                 <div class="success-detail-row">
                     <span class="success-detail-label">📍 Distancia</span>
@@ -1447,6 +1495,7 @@
             
             modal.classList.add('active');
             
+            // Vibración de éxito
             if (navigator.vibrate) {
                 navigator.vibrate([100, 50, 100]);
             }
@@ -1489,9 +1538,6 @@
             if (confirm('¿Cerrar sesión?')) {
                 if (intervaloActualizacion) {
                     clearInterval(intervaloActualizacion);
-                }
-                if (scannerActivo) {
-                    detenerScanner();
                 }
                 localStorage.clear();
                 window.location.href = '/';

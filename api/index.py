@@ -1,4 +1,4 @@
-# api/index.py - VERSIÓN CORREGIDA Y FUNCIONAL
+# api/index.py - COMPLETO con todos los endpoints
 import os
 import hashlib
 import secrets
@@ -58,9 +58,9 @@ def handler_register(request):
             if field not in data:
                 return {'success': False, 'message': f'Falta campo: {field}'}, 400
         
-        # Validar matrícula
+        # Validar matrícula (nuevo formato 8 caracteres)
         if not validar_matricula(data['matricula']):
-            return {'success': False, 'message': 'Matrícula inválida. Formato: 9 caracteres (ej: 112H11111)'}, 400
+            return {'success': False, 'message': 'Matrícula inválida. Formato: 8 caracteres (ej: 232H17024)'}, 400
         
         if not validar_email(data['email']):
             return {'success': False, 'message': 'Email inválido'}, 400
@@ -93,12 +93,7 @@ def handler_register(request):
             return {
                 'success': True,
                 'message': 'Usuario registrado',
-                'user': {
-                    'id': result[0]['id'],
-                    'nombre': result[0]['nombre'],
-                    'email': result[0]['email'],
-                    'rol': result[0]['rol']
-                },
+                'user': result[0],
                 'token': generar_token()
             }, 201
         
@@ -144,7 +139,7 @@ def handler_login(request):
                 'nombre': user['nombre'],
                 'email': user['email'],
                 'rol': user['rol'],
-                'telefono_id': telefono_id or user['telefono_id']
+                'telefono_id': user['telefono_id']
             },
             'token': generar_token()
         }, 200
@@ -152,139 +147,87 @@ def handler_login(request):
     except Exception as e:
         return {'success': False, 'message': str(e)}, 500
 
-def handler_verificar_sesion(request):
-    """GET /api/verificar-sesion - VERIFICA LA SESIÓN DEL USUARIO (CORREGIDO)"""
+def handler_verify(request):
+    """POST /api/verify-session"""
     try:
-        # Obtener headers
-        telefono_id = request.headers.get('telefono-id')
-        usuario_id = request.headers.get('usuario-id')
-        
-        print(f"🔍 Verificando sesión - tel: {telefono_id}, user: {usuario_id}")
-        
-        if not telefono_id or not usuario_id:
-            print("❌ Headers incompletos")
-            return {'success': False, 'message': 'Headers incompletos'}, 400
-        
-        db = get_db()
-        
-        # Verificar que el usuario existe y el teléfono coincide
-        result = db.query('usuarios', params={
-            'id': f'eq.{usuario_id}',
-            'telefono_id': f'eq.{telefono_id}'
-        })
-        
-        if result and len(result) > 0:
-            user = result[0]
-            print(f"✅ Sesión válida para: {user['nombre']}")
-            return {
-                'success': True,
-                'user': {
-                    'id': user['id'],
-                    'nombre': user['nombre'],
-                    'email': user['email'],
-                    'rol': user['rol']
-                }
-            }, 200
-        
-        print("❌ Usuario no encontrado o teléfono no coincide")
-        return {'success': False, 'message': 'Sesión no válida'}, 401
-        
-    except Exception as e:
-        print(f"❌ Error verificando sesión: {e}")
-        return {'success': False, 'message': str(e)}, 500
-
-def handler_usuario_info(request):
-    """GET /api/usuario-info - Obtiene información del usuario actual"""
-    try:
-        telefono_id = request.headers.get('telefono-id')
+        data = request.get_json()
+        telefono_id = data.get('telefono_id')
         
         if not telefono_id:
-            return {'success': False, 'message': 'Telefono ID requerido'}, 400
+            return {'valid': False}
         
         db = get_db()
         result = db.query('usuarios', params={'telefono_id': f'eq.{telefono_id}'})
         
-        if not result or len(result) == 0:
-            return {'success': False, 'message': 'Usuario no encontrado'}, 404
+        if result and len(result) > 0:
+            user = result[0]
+            return {
+                'valid': True,
+                'user': {
+                    'id': user['id'],
+                    'matricula': user['matricula'],
+                    'nombre': user['nombre'],
+                    'email': user['email'],
+                    'rol': user['rol']
+                }
+            }
         
-        user = result[0]
+        return {'valid': False}
         
-        return {
-            'success': True,
-            'nombre': user['nombre'],
-            'email': user['email'],
-            'rol': user['rol'],
-            'matricula': user.get('matricula')
-        }, 200
-        
-    except Exception as e:
-        return {'success': False, 'message': str(e)}, 500
+    except Exception:
+        return {'valid': False}
 
-def handler_estadisticas_alumno(request):
-    """GET /api/estadisticas-alumno - Obtiene estadísticas del alumno"""
+def handler_estadisticas(request, user_id):
+    """GET /api/alumno/<user_id>/estadisticas"""
     try:
-        telefono_id = request.headers.get('telefono-id')
-        
-        if not telefono_id:
-            return {'success': False, 'message': 'Telefono ID requerido'}, 400
-        
         db = get_db()
         
-        # Obtener usuario
-        usuarios = db.query('usuarios', params={'telefono_id': f'eq.{telefono_id}'})
-        if not usuarios or len(usuarios) == 0:
-            return {'success': False, 'message': 'Usuario no encontrado'}, 404
+        alumno = db.query('usuarios', params={'id': f'eq.{user_id}', 'rol': 'eq.alumno'})
+        if not alumno or len(alumno) == 0:
+            return {'success': False, 'message': 'Alumno no encontrado'}, 404
         
-        alumno_id = usuarios[0]['id']
-        
-        # Obtener asistencias del alumno
         asistencias = db.query('asistencias', params={
-            'alumno_id': f'eq.{alumno_id}'
+            'alumno_id': f'eq.{user_id}',
+            'select': 'id,valida,justificada'
         })
         
         asistencias_count = 0
+        justificadas_count = 0
+        
         if asistencias:
             for a in asistencias:
                 if a.get('valida') or a.get('justificada'):
                     asistencias_count += 1
+                if a.get('justificada'):
+                    justificadas_count += 1
         
-        # Obtener total de clases
         clases = db.query('clases', params={'select': 'count'})
-        total_clases = clases[0]['count'] if clases and len(clases) > 0 else 0
+        total_clases = clases[0]['count'] if clases and len(clases) > 0 else 20
         
-        # Si no hay clases, usar 20 como valor por defecto
-        if total_clases == 0:
-            total_clases = 20
+        faltas_count = total_clases - asistencias_count
+        porcentaje = round((asistencias_count / total_clases) * 100) if total_clases > 0 else 0
         
         return {
             'success': True,
-            'total_clases': total_clases,
-            'asistencias': asistencias_count
+            'estadisticas': {
+                'asistencias': asistencias_count,
+                'faltas': faltas_count,
+                'justificadas': justificadas_count,
+                'total_clases': total_clases,
+                'porcentaje': porcentaje
+            }
         }, 200
         
     except Exception as e:
         return {'success': False, 'message': str(e)}, 500
 
-def handler_actividad_alumno(request):
-    """GET /api/actividad-alumno - Obtiene actividad reciente del alumno"""
+def handler_actividad(request, user_id):
+    """GET /api/alumno/<user_id>/actividad"""
     try:
-        telefono_id = request.headers.get('telefono-id')
-        
-        if not telefono_id:
-            return {'success': False, 'message': 'Telefono ID requerido'}, 400
-        
         db = get_db()
         
-        # Obtener usuario
-        usuarios = db.query('usuarios', params={'telefono_id': f'eq.{telefono_id}'})
-        if not usuarios or len(usuarios) == 0:
-            return {'success': False, 'message': 'Usuario no encontrado'}, 404
-        
-        alumno_id = usuarios[0]['id']
-        
-        # Obtener últimas 10 asistencias
         asistencias = db.query('asistencias', params={
-            'alumno_id': f'eq.{alumno_id}',
+            'alumno_id': f'eq.{user_id}',
             'order': 'fecha_escaneo.desc',
             'limit': 10
         })
@@ -292,180 +235,23 @@ def handler_actividad_alumno(request):
         actividades = []
         if asistencias:
             for a in asistencias:
-                # Obtener información de la clase
-                clase_info = None
-                if a.get('clase_id'):
-                    clase = db.query('clases', params={'id': f'eq.{a["clase_id"]}'})
-                    if clase and len(clase) > 0:
-                        clase_info = clase[0]
+                fecha = datetime.fromisoformat(a['fecha_escaneo'].replace('Z', '+00:00'))
+                fecha_str = fecha.strftime('%d %b, %H:%M')
+                
+                tipo = 'asistencia'
+                if a.get('justificada'):
+                    tipo = 'justificante'
+                elif not a.get('valida'):
+                    tipo = 'invalida'
                 
                 actividades.append({
-                    'fecha': a['fecha_escaneo'],
-                    'estado': 'Presente' if a.get('valida') else 'Ausente' if not a.get('justificada') else 'Justificado',
-                    'materia': clase_info.get('materia') if clase_info else 'Clase',
-                    'valida': a.get('valida', False),
-                    'justificada': a.get('justificada', False)
+                    'tipo': tipo,
+                    'fecha': fecha_str
                 })
         
-        return {
-            'success': True,
-            'actividades': actividades
-        }, 200
+        return {'success': True, 'actividades': actividades}, 200
         
     except Exception as e:
-        return {'success': False, 'message': str(e)}, 500
-
-def handler_clase_info(request, clase_id):
-    """GET /api/clase/<clase_id> - Obtiene información de una clase"""
-    try:
-        db = get_db()
-        
-        clase = db.query('clases', params={'id': f'eq.{clase_id}'})
-        
-        if not clase or len(clase) == 0:
-            return {'success': False, 'message': 'Clase no encontrada'}, 404
-        
-        clase_info = clase[0]
-        
-        # Obtener nombre del profesor
-        profesor_nombre = None
-        if clase_info.get('profesor_id'):
-            profesor = db.query('usuarios', params={'id': f'eq.{clase_info["profesor_id"]}'})
-            if profesor and len(profesor) > 0:
-                profesor_nombre = profesor[0]['nombre']
-        
-        return {
-            'success': True,
-            'id': clase_info['id'],
-            'materia': clase_info.get('materia', 'Clase'),
-            'profesor_nombre': profesor_nombre,
-            'fecha': clase_info.get('fecha'),
-            'hora_inicio': clase_info.get('hora_inicio'),
-            'activa': clase_info.get('activa', False),
-            'latitud_referencia': clase_info.get('latitud_referencia'),
-            'longitud_referencia': clase_info.get('longitud_referencia')
-        }, 200
-        
-    except Exception as e:
-        return {'success': False, 'message': str(e)}, 500
-
-def handler_registrar_asistencia(request):
-    """POST /api/registrar-asistencia"""
-    try:
-        data = request.get_json()
-        qr_data = data.get('qr_data')
-        telefono_id = data.get('telefono_id')
-        usuario_id = data.get('usuario_id')
-        latitud = data.get('latitud')
-        longitud = data.get('longitud')
-        
-        print(f"📥 Datos recibidos: qr={qr_data}, usuario_id={usuario_id}, tel={telefono_id}")
-        
-        if not qr_data or not telefono_id or not usuario_id:
-            return {'success': False, 'message': 'Datos incompletos'}, 400
-        
-        db = get_db()
-        
-        # Verificar usuario
-        alumno = db.query('usuarios', params={
-            'id': f'eq.{usuario_id}',
-            'telefono_id': f'eq.{telefono_id}',
-            'rol': 'eq.alumno'
-        })
-        
-        if not alumno or len(alumno) == 0:
-            return {'success': False, 'message': 'Usuario no válido'}, 403
-        
-        alumno_id = alumno[0]['id']
-        
-        # Decodificar QR
-        try:
-            qr_info = json.loads(qr_data)
-            clase_id = qr_info.get('clase_id')
-        except:
-            if isinstance(qr_data, str) and qr_data.startswith('clase_'):
-                clase_id = int(qr_data.split('_')[1])
-            else:
-                try:
-                    clase_id = int(qr_data)
-                except:
-                    return {'success': False, 'message': 'QR inválido'}, 400
-        
-        # Verificar clase
-        clase = db.query('clases', params={
-            'id': f'eq.{clase_id}',
-            'activa': 'eq.true'
-        })
-        
-        if not clase or len(clase) == 0:
-            return {'success': False, 'message': 'Clase no válida o ya finalizó'}, 400
-        
-        clase_info = clase[0]
-        
-        # Verificar si ya registró
-        existente = db.query('asistencias', params={
-            'clase_id': f'eq.{clase_id}',
-            'alumno_id': f'eq.{alumno_id}'
-        })
-        
-        if existente and len(existente) > 0:
-            return {'success': False, 'message': 'Ya registraste tu asistencia'}, 400
-        
-        # Calcular distancia
-        distancia = None
-        valida = True
-        
-        if latitud and longitud and clase_info.get('latitud_referencia') and clase_info.get('longitud_referencia'):
-            distancia = calcular_distancia(
-                float(latitud), 
-                float(longitud), 
-                float(clase_info['latitud_referencia']), 
-                float(clase_info['longitud_referencia'])
-            )
-            
-            DISTANCIA_MAXIMA = 100  # metros
-            if distancia and distancia > DISTANCIA_MAXIMA:
-                valida = False
-        
-        # Registrar asistencia
-        nueva_asistencia = {
-            'clase_id': clase_id,
-            'alumno_id': alumno_id,
-            'fecha_escaneo': datetime.now().isoformat(),
-            'latitud_escaneo': float(latitud) if latitud else None,
-            'longitud_escaneo': float(longitud) if longitud else None,
-            'distancia_metros': round(distancia, 2) if distancia else None,
-            'valida': valida,
-            'justificada': False
-        }
-        
-        result = db.query('asistencias', method='POST', data=nueva_asistencia)
-        
-        if result and len(result) > 0:
-            materia = clase_info.get('materia', 'Clase')
-            
-            profesor_nombre = None
-            if clase_info.get('profesor_id'):
-                profesor = db.query('usuarios', params={
-                    'id': f'eq.{clase_info["profesor_id"]}'
-                })
-                if profesor and len(profesor) > 0:
-                    profesor_nombre = profesor[0]['nombre']
-            
-            return {
-                'success': True,
-                'message': 'Asistencia registrada',
-                'asistencia_id': result[0]['id'],
-                'materia': materia,
-                'profesor': profesor_nombre,
-                'distancia': round(distancia, 2) if distancia else None,
-                'valida': valida
-            }, 201
-        else:
-            return {'success': False, 'message': 'Error al registrar'}, 500
-            
-    except Exception as e:
-        print(f"❌ Error: {e}")
         return {'success': False, 'message': str(e)}, 500
 
 def handler_clase_activa(request):
@@ -508,37 +294,26 @@ def handler_iniciar_clase(request):
             'hora_inicio': datetime.now().time().isoformat(),
             'activa': True,
             'latitud_referencia': latitud,
-            'longitud_referencia': longitud,
-            'materia': 'Clase'
+            'longitud_referencia': longitud
         }
         
         result = db.query('clases', method='POST', data=nueva_clase)
         
         if result and len(result) > 0:
-            return {'success': True, 'clase': result[0]}, 200
+            clase = result[0]
+            return {
+                'success': True,
+                'clase': {
+                    'id': clase['id'],
+                    'fecha': clase['fecha'],
+                    'hora_inicio': clase['hora_inicio'],
+                    'latitud_referencia': clase['latitud_referencia'],
+                    'longitud_referencia': clase['longitud_referencia']
+                }
+            }, 200
         
         return {'success': False, 'message': 'Error al crear clase'}, 500
             
-    except Exception as e:
-        return {'success': False, 'message': str(e)}, 500
-
-def handler_terminar_clase(request):
-    """POST /api/clase/terminar"""
-    try:
-        data = request.get_json()
-        clase_id = data.get('clase_id')
-        
-        if not clase_id:
-            return {'success': False, 'message': 'ID de clase requerido'}, 400
-        
-        db = get_db()
-        
-        db.query('clases', method='PATCH',
-                data={'activa': False, 'hora_fin': datetime.now().time().isoformat()},
-                params={'id': f'eq.{clase_id}'})
-        
-        return {'success': True, 'message': 'Clase terminada'}, 200
-        
     except Exception as e:
         return {'success': False, 'message': str(e)}, 500
 
@@ -575,75 +350,186 @@ def handler_asistencias_clase(request, clase_id):
     except Exception as e:
         return {'success': False, 'message': str(e)}, 500
 
-def handler_dashboard_profesor(request, user_id):
-    """GET /api/profesor/<user_id>/dashboard"""
+def handler_terminar_clase(request):
+    """POST /api/clase/terminar"""
     try:
+        data = request.get_json()
+        clase_id = data.get('clase_id')
+        
+        if not clase_id:
+            return {'success': False, 'message': 'ID de clase requerido'}, 400
+        
         db = get_db()
         
-        profesor = db.query('usuarios', params={
-            'id': f'eq.{user_id}',
-            'rol': 'eq.profesor'
+        db.query('clases', method='PATCH',
+                data={'activa': False, 'hora_fin': datetime.now().time().isoformat()},
+                params={'id': f'eq.{clase_id}'})
+        
+        return {'success': True, 'message': 'Clase terminada'}, 200
+        
+    except Exception as e:
+        return {'success': False, 'message': str(e)}, 500
+
+# ===== REEMPLAZA ESTA FUNCIÓN EN TU index.py =====
+# Busca la función handler_registrar_asistencia y reemplázala con esta versión:
+
+def handler_registrar_asistencia(request):
+    """POST /api/registrar-asistencia"""
+    try:
+        data = request.get_json()
+        qr_data = data.get('qr_data')
+        telefono_id = data.get('telefono_id')
+        usuario_id = data.get('usuario_id')  # ✅ NUEVO: recibir usuario_id
+        latitud = data.get('latitud')
+        longitud = data.get('longitud')
+        
+        print(f"📥 Datos recibidos: qr={qr_data}, usuario_id={usuario_id}, tel={telefono_id}")
+        
+        # Validar datos requeridos
+        if not qr_data or not telefono_id or not usuario_id:
+            return {'success': False, 'message': 'Datos incompletos'}, 400
+        
+        db = get_db()
+        
+        # 1. Verificar que el usuario_id corresponda al telefono_id (seguridad)
+        alumno = db.query('usuarios', params={
+            'id': f'eq.{usuario_id}',
+            'telefono_id': f'eq.{telefono_id}',
+            'rol': 'eq.alumno'
         })
         
-        if not profesor or len(profesor) == 0:
-            return {'success': False, 'message': 'Profesor no encontrado'}, 404
+        if not alumno or len(alumno) == 0:
+            return {'success': False, 'message': 'Usuario no válido o no coincide con el dispositivo'}, 403
         
-        alumnos = db.query('usuarios', params={'rol': 'eq.alumno'})
+        alumno_id = alumno[0]['id']  # Este es el id de la tabla usuarios
+        alumno_nombre = alumno[0]['nombre']
         
-        clases = db.query('clases', params={'select': 'count'})
-        total_clases = clases[0]['count'] if clases and len(clases) > 0 else 20
+        print(f"✅ Usuario validado: {alumno_nombre} (ID: {alumno_id})")
         
-        verde = amarillo = naranja = rojo = 0
-        alumnos_detalle = []
+        # 2. Decodificar QR para obtener clase_id
+        try:
+            # Intentar parsear como JSON
+            qr_info = json.loads(qr_data)
+            clase_id = qr_info.get('clase_id')
+        except:
+            # Si no es JSON, extraer del formato "clase_123"
+            if isinstance(qr_data, str) and qr_data.startswith('clase_'):
+                clase_id = int(qr_data.split('_')[1])
+            else:
+                # Si es solo el número
+                clase_id = int(qr_data)
         
-        if alumnos:
-            for alumno in alumnos:
-                asistencias = db.query('asistencias', params={
-                    'alumno_id': f'eq.{alumno["id"]}'
+        print(f"🎓 Clase ID extraído: {clase_id}")
+        
+        # 3. Verificar que la clase existe y está activa
+        clase = db.query('clases', params={
+            'id': f'eq.{clase_id}',
+            'activa': 'eq.true'
+        })
+        
+        if not clase or len(clase) == 0:
+            return {'success': False, 'message': 'Clase no válida o ya finalizó'}, 400
+        
+        clase_info = clase[0]
+        print(f"📚 Clase encontrada y activa")
+        
+        # 4. Verificar si ya registró asistencia para esta clase
+        existente = db.query('asistencias', params={
+            'clase_id': f'eq.{clase_id}',
+            'alumno_id': f'eq.{alumno_id}'
+        })
+        
+        if existente and len(existente) > 0:
+            return {'success': False, 'message': 'Ya registraste tu asistencia en esta clase'}, 400
+        
+        # 5. Calcular distancia si hay coordenadas
+        distancia = None
+        valida = True
+        
+        if latitud and longitud and clase_info.get('latitud_referencia') and clase_info.get('longitud_referencia'):
+            distancia = calcular_distancia(
+                float(latitud), 
+                float(longitud), 
+                float(clase_info['latitud_referencia']), 
+                float(clase_info['longitud_referencia'])
+            )
+            
+            # Validar rango (100 metros de tolerancia)
+            DISTANCIA_MAXIMA = 100  # metros
+            if distancia and distancia > DISTANCIA_MAXIMA:
+                valida = False
+                print(f"⚠️ Fuera de rango: {distancia:.2f}m > {DISTANCIA_MAXIMA}m")
+            else:
+                print(f"✅ Dentro del rango: {distancia:.2f}m")
+        
+        # 6. Registrar asistencia en la base de datos
+        nueva_asistencia = {
+            'clase_id': clase_id,
+            'alumno_id': alumno_id,  # ✅ Este es el id de la tabla usuarios
+            'fecha_escaneo': datetime.now().isoformat(),
+            'latitud_escaneo': float(latitud) if latitud else None,
+            'longitud_escaneo': float(longitud) if longitud else None,
+            'distancia_metros': round(distancia, 2) if distancia else None,
+            'valida': valida,
+            'justificada': False
+        }
+        
+        print(f"💾 Insertando asistencia: {nueva_asistencia}")
+        
+        result = db.query('asistencias', method='POST', data=nueva_asistencia)
+        
+        if result and len(result) > 0:
+            # 7. Obtener información adicional para la respuesta
+            materia = clase_info.get('materia', 'Clase')
+            
+            # Obtener nombre del profesor
+            profesor_nombre = None
+            if clase_info.get('profesor_id'):
+                profesor = db.query('usuarios', params={
+                    'id': f'eq.{clase_info["profesor_id"]}'
                 })
-                
-                asistencias_count = 0
-                faltas_count = 0
-                if asistencias:
-                    for a in asistencias:
-                        if a.get('valida') or a.get('justificada'):
-                            asistencias_count += 1
-                        else:
-                            faltas_count += 1
-                
-                porcentaje = round((asistencias_count / total_clases) * 100) if total_clases > 0 else 0
-                
-                if porcentaje >= 80:
-                    verde += 1
-                elif porcentaje >= 50:
-                    amarillo += 1
-                elif porcentaje >= 30:
-                    naranja += 1
-                else:
-                    rojo += 1
-                
-                alumnos_detalle.append({
-                    'id': alumno['id'],
-                    'nombre': alumno['nombre'],
-                    'matricula': alumno['matricula'],
-                    'asistencias': asistencias_count,
-                    'faltas': faltas_count,
-                    'porcentaje': porcentaje
-                })
+                if profesor and len(profesor) > 0:
+                    profesor_nombre = profesor[0]['nombre']
+            
+            print(f"✅ Asistencia registrada con ID: {result[0]['id']}")
+            
+            return {
+                'success': True,
+                'message': 'Asistencia registrada correctamente',
+                'asistencia_id': result[0]['id'],
+                'materia': materia,
+                'profesor': profesor_nombre,
+                'distancia_metros': round(distancia, 2) if distancia else None,
+                'valida': valida,
+                'fecha_escaneo': result[0]['fecha_escaneo']
+            }, 201
+        else:
+            return {'success': False, 'message': 'Error al registrar asistencia en la base de datos'}, 500
+            
+    except Exception as e:
+        print(f"❌ Error registrando asistencia: {e}")
+        import traceback
+        traceback.print_exc()
+        return {'success': False, 'message': f'Error interno: {str(e)}'}, 500
+
+def handler_justificar(request):
+    """POST /api/asistencia/justificar"""
+    try:
+        data = request.get_json()
+        asistencia_id = data.get('asistencia_id')
+        motivo = data.get('motivo')
+        comentario = data.get('comentario')
         
-        return {
-            'success': True,
-            'dashboard': {
-                'total_alumnos': len(alumnos) if alumnos else 0,
-                'semaforo': {
-                    'verde': verde,
-                    'amarillo': amarillo,
-                    'naranja': naranja,
-                    'rojo': rojo
-                },
-                'alumnos': alumnos_detalle
-            }
-        }, 200
+        if not asistencia_id or not motivo:
+            return {'success': False, 'message': 'Datos incompletos'}, 400
+        
+        db = get_db()
+        
+        db.query('asistencias', method='PATCH',
+                data={'justificada': True, 'motivo_justificacion': motivo, 'comentario': comentario},
+                params={'id': f'eq.{asistencia_id}'})
+        
+        return {'success': True, 'message': 'Falta justificada'}, 200
         
     except Exception as e:
         return {'success': False, 'message': str(e)}, 500
@@ -676,24 +562,71 @@ def handler_check_matricula(request):
     except Exception:
         return {'exists': False}
 
-def handler_justificar(request):
-    """POST /api/asistencia/justificar"""
+def handler_dashboard_profesor(request, user_id):
+    """GET /api/profesor/<user_id>/dashboard"""
     try:
-        data = request.get_json()
-        asistencia_id = data.get('asistencia_id')
-        motivo = data.get('motivo')
-        comentario = data.get('comentario')
-        
-        if not asistencia_id or not motivo:
-            return {'success': False, 'message': 'Datos incompletos'}, 400
-        
         db = get_db()
         
-        db.query('asistencias', method='PATCH',
-                data={'justificada': True, 'motivo_justificacion': motivo, 'comentario': comentario},
-                params={'id': f'eq.{asistencia_id}'})
+        profesor = db.query('usuarios', params={
+            'id': f'eq.{user_id}',
+            'rol': 'eq.profesor'
+        })
         
-        return {'success': True, 'message': 'Falta justificada'}, 200
+        if not profesor or len(profesor) == 0:
+            return {'success': False, 'message': 'Profesor no encontrado'}, 404
+        
+        alumnos = db.query('usuarios', params={'rol': 'eq.alumno'})
+        
+        clases = db.query('clases', params={'select': 'count'})
+        total_clases = clases[0]['count'] if clases and len(clases) > 0 else 20
+        
+        verde = amarillo = naranja = rojo = 0
+        alumnos_detalle = []
+        
+        if alumnos:
+            for alumno in alumnos:
+                asistencias = db.query('asistencias', params={
+                    'alumno_id': f'eq.{alumno["id"]}'
+                })
+                
+                asistencias_count = 0
+                if asistencias:
+                    for a in asistencias:
+                        if a.get('valida') or a.get('justificada'):
+                            asistencias_count += 1
+                
+                porcentaje = round((asistencias_count / total_clases) * 100) if total_clases > 0 else 0
+                
+                if porcentaje >= 80:
+                    verde += 1
+                elif porcentaje >= 50:
+                    amarillo += 1
+                elif porcentaje >= 30:
+                    naranja += 1
+                else:
+                    rojo += 1
+                
+                alumnos_detalle.append({
+                    'id': alumno['id'],
+                    'nombre': alumno['nombre'],
+                    'matricula': alumno['matricula'],
+                    'asistencias': asistencias_count,
+                    'porcentaje': porcentaje
+                })
+        
+        return {
+            'success': True,
+            'dashboard': {
+                'total_alumnos': len(alumnos) if alumnos else 0,
+                'semaforo': {
+                    'verde': verde,
+                    'amarillo': amarillo,
+                    'naranja': naranja,
+                    'rojo': rojo
+                },
+                'alumnos': alumnos_detalle
+            }
+        }, 200
         
     except Exception as e:
         return {'success': False, 'message': str(e)}, 500
@@ -705,8 +638,8 @@ def handler(request, **kwargs):
     # CORS headers
     headers = {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PATCH',
-        'Access-Control-Allow-Headers': 'Content-Type, telefono-id, usuario-id'
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
     }
     
     # Manejar preflight OPTIONS
@@ -715,8 +648,6 @@ def handler(request, **kwargs):
     
     path = request.path
     method = request.method
-    
-    print(f"🌐 {method} {path}")
     
     try:
         # ===== API ROUTES =====
@@ -728,25 +659,18 @@ def handler(request, **kwargs):
             response, status = handler_login(request)
             return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
         
-        # 👇 RUTA CORREGIDA PARA VERIFICAR SESIÓN (GET)
-        elif path == '/api/verificar-sesion' and method == 'GET':
-            response, status = handler_verificar_sesion(request)
-            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+        elif path == '/api/verify-session' and method == 'POST':
+            response = handler_verify(request)
+            return (json.dumps(response), 200, {'Content-Type': 'application/json', **headers})
         
-        # 👇 NUEVAS RUTAS PARA ALUMNOS
-        elif path == '/api/usuario-info' and method == 'GET':
-            response, status = handler_usuario_info(request)
-            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+        elif path == '/api/check-email' and method == 'POST':
+            response = handler_check_email(request)
+            return (json.dumps(response), 200, {'Content-Type': 'application/json', **headers})
         
-        elif path == '/api/estadisticas-alumno' and method == 'GET':
-            response, status = handler_estadisticas_alumno(request)
-            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+        elif path == '/api/check-matricula' and method == 'POST':
+            response = handler_check_matricula(request)
+            return (json.dumps(response), 200, {'Content-Type': 'application/json', **headers})
         
-        elif path == '/api/actividad-alumno' and method == 'GET':
-            response, status = handler_actividad_alumno(request)
-            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
-        
-        # Rutas de clases (orden IMPORTANTE)
         elif path == '/api/clase/activa' and method == 'GET':
             response, status = handler_clase_activa(request)
             return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
@@ -759,7 +683,72 @@ def handler(request, **kwargs):
             response, status = handler_terminar_clase(request)
             return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
         
-        # Ruta para obtener información de una clase específica (DEBE IR DESPUÉS de las rutas específicas)
+        # 👇 NUEVO ENDPOINT PARA REGISTRAR ASISTENCIA
+        elif path == '/api/registrar-asistencia' and method == 'POST':
+            response, status = handler_registrar_asistencia(request)
+            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+        
+        elif path == '/api/asistencia/justificar' and method == 'POST':
+            response, status = handler_justificar(request)
+            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+        
+        elif path.startswith('/api/alumno/') and method == 'GET':
+            parts = path.split('/')
+            if len(parts) == 4 and parts[3] == 'estadisticas':
+                user_id = int(parts[2])
+                response, status = handler_estadisticas(request, user_id)
+                return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+            elif len(parts) == 4 and parts[3] == 'actividad':
+                user_id = int(parts[2])
+                response, status = handler_actividad(request, user_id)
+                return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+        
+        elif path.startswith('/api/profesor/') and method == 'GET':
+            parts = path.split('/')
+            if len(parts) == 4 and parts[3] == 'dashboard':
+                user_id = int(parts[2])
+                response, status = handler_dashboard_profesor(request, user_id)
+                return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+        
+        elif path.startswith('/api/clase/') and method == 'GET':
+            parts = path.split('/')
+            if len(parts) == 4 and parts[3] == 'asistencias':
+                clase_id = int(parts[2])
+                response, status = handler_asistencias_clase(request, clase_id)
+                return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+        
+        # 404 para rutas no encontradas
+        return (json.dumps({'error': 'Not found'}), 404, {'Content-Type': 'application/json', **headers})
+        
+    except Exception as e:
+        return (json.dumps({'error': str(e)}), 500, {'Content-Type': 'application/json', **headers})
+
+def handler(request, **kwargs):
+    headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+    }
+    
+    if request.method == 'OPTIONS':
+        return ('', 204, headers)
+    
+    path = request.path
+    method = request.method
+    
+    try:
+        # ===== RUTAS API =====
+        if path == '/api/register' and method == 'POST':
+            response, status = handler_register(request)
+            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+        
+        elif path == '/api/login' and method == 'POST':
+            response, status = handler_login(request)
+            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+        
+        # ... otras rutas ...
+        
+        # 👇 NUEVA RUTA PARA ASISTENCIAS DE CLASE
         elif path.startswith('/api/clase/') and method == 'GET':
             parts = path.split('/')
             if len(parts) == 4 and parts[3] == 'asistencias':
@@ -769,46 +758,9 @@ def handler(request, **kwargs):
                     return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
                 except ValueError:
                     return (json.dumps({'error': 'Invalid clase_id'}), 400, {'Content-Type': 'application/json', **headers})
-            elif len(parts) == 3:
-                try:
-                    clase_id = int(parts[2])
-                    response, status = handler_clase_info(request, clase_id)
-                    return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
-                except ValueError:
-                    return (json.dumps({'error': 'Invalid clase_id'}), 400, {'Content-Type': 'application/json', **headers})
-        
-        # Registrar asistencia
-        elif path == '/api/registrar-asistencia' and method == 'POST':
-            response, status = handler_registrar_asistencia(request)
-            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
-        
-        # Dashboard profesor
-        elif path.startswith('/api/profesor/') and method == 'GET':
-            parts = path.split('/')
-            if len(parts) == 4 and parts[3] == 'dashboard':
-                try:
-                    user_id = int(parts[2])
-                    response, status = handler_dashboard_profesor(request, user_id)
-                    return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
-                except ValueError:
-                    return (json.dumps({'error': 'Invalid user_id'}), 400, {'Content-Type': 'application/json', **headers})
-        
-        # Utilidades
-        elif path == '/api/check-email' and method == 'POST':
-            response = handler_check_email(request)
-            return (json.dumps(response), 200, {'Content-Type': 'application/json', **headers})
-        
-        elif path == '/api/check-matricula' and method == 'POST':
-            response = handler_check_matricula(request)
-            return (json.dumps(response), 200, {'Content-Type': 'application/json', **headers})
-        
-        elif path == '/api/asistencia/justificar' and method == 'POST':
-            response, status = handler_justificar(request)
-            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
         
         # 404
         return (json.dumps({'error': 'Not found'}), 404, {'Content-Type': 'application/json', **headers})
         
     except Exception as e:
-        print(f"❌ Error: {e}")
         return (json.dumps({'error': str(e)}), 500, {'Content-Type': 'application/json', **headers})
