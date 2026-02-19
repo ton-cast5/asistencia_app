@@ -201,10 +201,12 @@ def handler_estadisticas(request, user_id):
                 if a.get('justificada'):
                     justificadas_count += 1
         
-        clases = db.query('clases', params={'select': 'count'})
-        total_clases = clases[0]['count'] if clases and len(clases) > 0 else 20
-        
-        faltas_count = total_clases - asistencias_count
+        clases = db.query('clases', params={'select': 'id'})
+        total_clases = len(clases) if clases else 0
+        if total_clases == 0:
+            total_clases = asistencias_count if asistencias_count > 0 else 1
+
+        faltas_count = max(0, total_clases - asistencias_count)
         porcentaje = round((asistencias_count / total_clases) * 100) if total_clases > 0 else 0
         
         return {
@@ -235,8 +237,13 @@ def handler_actividad(request, user_id):
         actividades = []
         if asistencias:
             for a in asistencias:
-                fecha = datetime.fromisoformat(a['fecha_escaneo'].replace('Z', '+00:00'))
-                fecha_str = fecha.strftime('%d %b, %H:%M')
+                fecha_raw = a.get('fecha_escaneo') or a.get('created_at', '')
+                try:
+                    fecha_str_clean = str(fecha_raw).replace('Z', '').split('.')[0]
+                    fecha = datetime.fromisoformat(fecha_str_clean)
+                    fecha_str = fecha.strftime('%d %b, %H:%M')
+                except Exception:
+                    fecha_str = 'Sin fecha'
                 
                 tipo = 'asistencia'
                 if a.get('justificada'):
@@ -577,8 +584,8 @@ def handler_dashboard_profesor(request, user_id):
         
         alumnos = db.query('usuarios', params={'rol': 'eq.alumno'})
         
-        clases = db.query('clases', params={'select': 'count'})
-        total_clases = clases[0]['count'] if clases and len(clases) > 0 else 20
+        clases = db.query('clases', params={'select': 'id'})
+        total_clases = len(clases) if clases else 1
         
         verde = amarillo = naranja = rojo = 0
         alumnos_detalle = []
@@ -718,48 +725,6 @@ def handler(request, **kwargs):
                 return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
         
         # 404 para rutas no encontradas
-        return (json.dumps({'error': 'Not found'}), 404, {'Content-Type': 'application/json', **headers})
-        
-    except Exception as e:
-        return (json.dumps({'error': str(e)}), 500, {'Content-Type': 'application/json', **headers})
-
-def handler(request, **kwargs):
-    headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-    }
-    
-    if request.method == 'OPTIONS':
-        return ('', 204, headers)
-    
-    path = request.path
-    method = request.method
-    
-    try:
-        # ===== RUTAS API =====
-        if path == '/api/register' and method == 'POST':
-            response, status = handler_register(request)
-            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
-        
-        elif path == '/api/login' and method == 'POST':
-            response, status = handler_login(request)
-            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
-        
-        # ... otras rutas ...
-        
-        # 👇 NUEVA RUTA PARA ASISTENCIAS DE CLASE
-        elif path.startswith('/api/clase/') and method == 'GET':
-            parts = path.split('/')
-            if len(parts) == 4 and parts[3] == 'asistencias':
-                try:
-                    clase_id = int(parts[2])
-                    response, status = handler_asistencias_clase(request, clase_id)
-                    return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
-                except ValueError:
-                    return (json.dumps({'error': 'Invalid clase_id'}), 400, {'Content-Type': 'application/json', **headers})
-        
-        # 404
         return (json.dumps({'error': 'Not found'}), 404, {'Content-Type': 'application/json', **headers})
         
     except Exception as e:
