@@ -1027,7 +1027,7 @@
         let html5QrCode = null;
         let scannerActivo = false;
         let intervaloActualizacion = null;
-        let usuarioId = localStorage.getItem('usuario_id');
+        let usuarioId = null;
         let qrDataPendiente = null;
 
         // ===== INICIALIZACIÓN =====
@@ -1036,9 +1036,20 @@
             
             // Verificar autenticación
             const telefonoId = localStorage.getItem('telefono_id');
+            const userData = localStorage.getItem('user_data');
             
-            if (!telefonoId || !usuarioId) {
+            if (!telefonoId || !userData) {
                 console.error("❌ No hay sesión válida");
+                window.location.href = '/';
+                return;
+            }
+
+            try {
+                const user = JSON.parse(userData);
+                usuarioId = user.id;
+            } catch (e) {
+                console.error("❌ user_data corrupto");
+                localStorage.clear();
                 window.location.href = '/';
                 return;
             }
