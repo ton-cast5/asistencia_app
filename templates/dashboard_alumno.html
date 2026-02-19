@@ -1037,7 +1037,7 @@
             // Verificar autenticación
             const telefonoId = localStorage.getItem('telefono_id');
             const userData = localStorage.getItem('user_data');
-            
+
             if (!telefonoId || !userData) {
                 console.error("❌ No hay sesión válida");
                 window.location.href = '/';
@@ -1047,6 +1047,14 @@
             try {
                 const user = JSON.parse(userData);
                 usuarioId = user.id;
+                // Mostrar nombre directamente desde localStorage
+                if (user.nombre) {
+                    document.getElementById('userName').textContent = user.nombre;
+                    const iniciales = user.nombre.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    document.getElementById('userAvatar').textContent = iniciales;
+                }
+                const deviceId = telefonoId.substring(0, 8);
+                document.getElementById('deviceId').textContent = `ID: ${deviceId}`;
             } catch (e) {
                 console.error("❌ user_data corrupto");
                 localStorage.clear();
@@ -1069,55 +1077,25 @@
 
         // ===== CARGA DE DATOS =====
         async function cargarDatosUsuario() {
-            try {
-                const response = await fetch('/api/usuario-info', {
-                    headers: {
-                        'telefono-id': localStorage.getItem('telefono_id')
-                    }
-                });
-                
-                if (!response.ok) throw new Error('Error al cargar datos');
-                
-                const data = await response.json();
-                
-                if (data.nombre) {
-                    document.getElementById('userName').textContent = data.nombre;
-                    const iniciales = data.nombre.split(' ')
-                        .map(n => n[0])
-                        .join('')
-                        .substring(0, 2)
-                        .toUpperCase();
-                    document.getElementById('userAvatar').textContent = iniciales;
-                }
-                
-                const deviceId = localStorage.getItem('telefono_id').substring(0, 8);
-                document.getElementById('deviceId').textContent = `ID: ${deviceId}`;
-                
-            } catch (error) {
-                console.error('Error cargando usuario:', error);
-                document.getElementById('userName').textContent = 'Alumno';
-            }
+            // Los datos del usuario ya se muestran desde localStorage en el init
+            // Esta función no hace nada extra por ahora
         }
 
         async function cargarEstadisticasReales() {
             try {
-                const response = await fetch('/api/estadisticas-alumno', {
-                    headers: {
-                        'telefono-id': localStorage.getItem('telefono_id')
-                    }
-                });
+                if (!usuarioId) return;
+                const response = await fetch(`/api/alumno/${usuarioId}/estadisticas`);
                 
                 if (!response.ok) throw new Error('Error al cargar estadísticas');
                 
                 const data = await response.json();
                 
-                document.getElementById('statTotal').textContent = data.total_clases || 0;
-                document.getElementById('statPresent').textContent = data.asistencias || 0;
-                
-                const porcentaje = data.total_clases > 0 
-                    ? Math.round((data.asistencias / data.total_clases) * 100)
-                    : 0;
-                document.getElementById('statPercentage').textContent = porcentaje + '%';
+                if (!data.success) return;
+                const e = data.estadisticas;
+
+                document.getElementById('statTotal').textContent = e.total_clases || 0;
+                document.getElementById('statPresent').textContent = e.asistencias || 0;
+                document.getElementById('statPercentage').textContent = (e.porcentaje || 0) + '%';
                 
             } catch (error) {
                 console.error('Error cargando estadísticas:', error);
@@ -1126,11 +1104,8 @@
 
         async function cargarActividadReciente() {
             try {
-                const response = await fetch('/api/actividad-alumno', {
-                    headers: {
-                        'telefono-id': localStorage.getItem('telefono_id')
-                    }
-                });
+                if (!usuarioId) return;
+                const response = await fetch(`/api/alumno/${usuarioId}/actividad`);
                 
                 if (!response.ok) throw new Error('Error al cargar actividad');
                 
@@ -1148,15 +1123,12 @@
                     return;
                 }
                 
+                // Backend devuelve: { tipo: 'asistencia'|'justificante'|'invalida', fecha: 'DD Mon, HH:MM' }
                 lista.innerHTML = data.actividades.map(act => {
-                    const icon = act.estado === 'Presente' ? 'check' : 'times';
-                    const clase = act.estado === 'Presente' ? 'present' : 'absent';
-                    const fecha = new Date(act.fecha).toLocaleDateString('es-MX', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
+                    const esPresente = act.tipo === 'asistencia';
+                    const icon = esPresente ? 'check' : (act.tipo === 'justificante' ? 'file-alt' : 'times');
+                    const clase = esPresente ? 'present' : 'absent';
+                    const estado = esPresente ? 'Presente' : (act.tipo === 'justificante' ? 'Justificada' : 'Inválida');
                     
                     return `
                         <div class="activity-item">
@@ -1164,8 +1136,8 @@
                                 <i class="fas fa-${icon}"></i>
                             </div>
                             <div class="activity-info">
-                                <div class="activity-title">${act.materia || 'Clase'}</div>
-                                <div class="activity-meta">${fecha} · ${act.estado}</div>
+                                <div class="activity-title">Clase</div>
+                                <div class="activity-meta">${act.fecha} · ${estado}</div>
                             </div>
                         </div>
                     `;
