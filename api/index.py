@@ -148,34 +148,42 @@ def handler_login(request):
         return {'success': False, 'message': str(e)}, 500
 
 def handler_verify(request):
-    """POST /api/verify-session"""
+    """GET /api/verificar-sesion - Verifica si la sesión es válida"""
     try:
-        data = request.get_json()
-        telefono_id = data.get('telefono_id')
+        # Obtener headers
+        telefono_id = request.headers.get('telefono-id')
+        usuario_id = request.headers.get('usuario-id')
         
-        if not telefono_id:
-            return {'valid': False}
+        print(f"🔍 Verificando sesión: tel={telefono_id}, user={usuario_id}")
+        
+        if not telefono_id or not usuario_id:
+            return {'success': False, 'message': 'Headers incompletos'}, 400
         
         db = get_db()
-        result = db.query('usuarios', params={'telefono_id': f'eq.{telefono_id}'})
+        
+        # Verificar que el usuario existe y el teléfono coincide
+        result = db.query('usuarios', params={
+            'id': f'eq.{usuario_id}',
+            'telefono_id': f'eq.{telefono_id}'
+        })
         
         if result and len(result) > 0:
             user = result[0]
             return {
-                'valid': True,
+                'success': True,
                 'user': {
                     'id': user['id'],
-                    'matricula': user['matricula'],
                     'nombre': user['nombre'],
                     'email': user['email'],
                     'rol': user['rol']
                 }
-            }
+            }, 200
         
-        return {'valid': False}
+        return {'success': False, 'message': 'Sesión no válida'}, 401
         
-    except Exception:
-        return {'valid': False}
+    except Exception as e:
+        print(f"❌ Error verificando sesión: {e}")
+        return {'success': False, 'message': str(e)}, 500
 
 def handler_estadisticas(request, user_id):
     """GET /api/alumno/<user_id>/estadisticas"""
@@ -746,7 +754,38 @@ def handler(request, **kwargs):
             response, status = handler_login(request)
             return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
         
-        # ... otras rutas ...
+        # ===== RUTAS PARA ALUMNOS =====
+        elif path == '/api/usuario-info' and method == 'GET':
+            response, status = handler_usuario_info(request)
+            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+
+        elif path == '/api/estadisticas-alumno' and method == 'GET':
+            response, status = handler_estadisticas_alumno(request)
+            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+
+        elif path == '/api/actividad-alumno' and method == 'GET':
+            response, status = handler_actividad_alumno(request)
+            return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+
+        # Esta ruta debe ir ANTES de /api/clase/activa para evitar conflictos
+        elif path.startswith('/api/clase/') and method == 'GET':
+            parts = path.split('/')
+            if len(parts) == 4 and parts[3] == 'asistencias':
+                # /api/clase/<id>/asistencias
+                try:
+                    clase_id = int(parts[2])
+                    response, status = handler_asistencias_clase(request, clase_id)
+                    return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+                except ValueError:
+                    return (json.dumps({'error': 'Invalid clase_id'}), 400, {'Content-Type': 'application/json', **headers})
+            elif len(parts) == 3:
+                # /api/clase/<id>
+                try:
+                    clase_id = int(parts[2])
+                    response, status = handler_clase_info(request, clase_id)
+                    return (json.dumps(response), status, {'Content-Type': 'application/json', **headers})
+                except ValueError:
+                    return (json.dumps({'error': 'Invalid clase_id'}), 400, {'Content-Type': 'application/json', **headers})
         
         # 👇 NUEVA RUTA PARA ASISTENCIAS DE CLASE
         elif path.startswith('/api/clase/') and method == 'GET':
@@ -764,3 +803,160 @@ def handler(request, **kwargs):
         
     except Exception as e:
         return (json.dumps({'error': str(e)}), 500, {'Content-Type': 'application/json', **headers})
+
+def handler_usuario_info(request):
+    """GET /api/usuario-info - Obtiene información del usuario actual"""
+    try:
+        telefono_id = request.headers.get('telefono-id')
+        
+        if not telefono_id:
+            return {'success': False, 'message': 'Telefono ID requerido'}, 400
+        
+        db = get_db()
+        result = db.query('usuarios', params={'telefono_id': f'eq.{telefono_id}'})
+        
+        if not result or len(result) == 0:
+            return {'success': False, 'message': 'Usuario no encontrado'}, 404
+        
+        user = result[0]
+        
+        return {
+            'success': True,
+            'nombre': user['nombre'],
+            'email': user['email'],
+            'rol': user['rol'],
+            'matricula': user.get('matricula')
+        }, 200
+        
+    except Exception as e:
+        return {'success': False, 'message': str(e)}, 500
+
+def handler_estadisticas_alumno(request):
+    """GET /api/estadisticas-alumno - Obtiene estadísticas del alumno"""
+    try:
+        telefono_id = request.headers.get('telefono-id')
+        
+        if not telefono_id:
+            return {'success': False, 'message': 'Telefono ID requerido'}, 400
+        
+        db = get_db()
+        
+        # Obtener usuario
+        usuarios = db.query('usuarios', params={'telefono_id': f'eq.{telefono_id}'})
+        if not usuarios or len(usuarios) == 0:
+            return {'success': False, 'message': 'Usuario no encontrado'}, 404
+        
+        alumno_id = usuarios[0]['id']
+        
+        # Obtener asistencias del alumno
+        asistencias = db.query('asistencias', params={
+            'alumno_id': f'eq.{alumno_id}'
+        })
+        
+        asistencias_count = 0
+        if asistencias:
+            for a in asistencias:
+                if a.get('valida') or a.get('justificada'):
+                    asistencias_count += 1
+        
+        # Obtener total de clases (de la tabla clases)
+        clases = db.query('clases', params={'select': 'count'})
+        total_clases = clases[0]['count'] if clases and len(clases) > 0 else 0
+        
+        # Si no hay clases registradas, usar 20 como valor por defecto
+        if total_clases == 0:
+            total_clases = 20
+        
+        return {
+            'success': True,
+            'total_clases': total_clases,
+            'asistencias': asistencias_count
+        }, 200
+        
+    except Exception as e:
+        return {'success': False, 'message': str(e)}, 500
+
+def handler_actividad_alumno(request):
+    """GET /api/actividad-alumno - Obtiene actividad reciente del alumno"""
+    try:
+        telefono_id = request.headers.get('telefono-id')
+        
+        if not telefono_id:
+            return {'success': False, 'message': 'Telefono ID requerido'}, 400
+        
+        db = get_db()
+        
+        # Obtener usuario
+        usuarios = db.query('usuarios', params={'telefono_id': f'eq.{telefono_id}'})
+        if not usuarios or len(usuarios) == 0:
+            return {'success': False, 'message': 'Usuario no encontrado'}, 404
+        
+        alumno_id = usuarios[0]['id']
+        
+        # Obtener últimas 10 asistencias
+        asistencias = db.query('asistencias', params={
+            'alumno_id': f'eq.{alumno_id}',
+            'order': 'fecha_escaneo.desc',
+            'limit': 10
+        })
+        
+        actividades = []
+        if asistencias:
+            for a in asistencias:
+                # Obtener información de la clase
+                clase_info = None
+                if a.get('clase_id'):
+                    clase = db.query('clases', params={'id': f'eq.{a["clase_id"]}'})
+                    if clase and len(clase) > 0:
+                        clase_info = clase[0]
+                
+                actividades.append({
+                    'fecha': a['fecha_escaneo'],
+                    'estado': 'Presente' if a.get('valida') else 'Ausente' if not a.get('justificada') else 'Justificado',
+                    'materia': clase_info.get('materia') if clase_info else 'Clase',
+                    'valida': a.get('valida', False),
+                    'justificada': a.get('justificada', False)
+                })
+        
+        return {
+            'success': True,
+            'actividades': actividades
+        }, 200
+        
+    except Exception as e:
+        return {'success': False, 'message': str(e)}, 500
+
+def handler_clase_info(request, clase_id):
+    """GET /api/clase/<clase_id> - Obtiene información de una clase"""
+    try:
+        db = get_db()
+        
+        clase = db.query('clases', params={'id': f'eq.{clase_id}'})
+        
+        if not clase or len(clase) == 0:
+            return {'success': False, 'message': 'Clase no encontrada'}, 404
+        
+        clase_info = clase[0]
+        
+        # Obtener nombre del profesor
+        profesor_nombre = None
+        if clase_info.get('profesor_id'):
+            profesor = db.query('usuarios', params={'id': f'eq.{clase_info["profesor_id"]}'})
+            if profesor and len(profesor) > 0:
+                profesor_nombre = profesor[0]['nombre']
+        
+        return {
+            'success': True,
+            'id': clase_info['id'],
+            'materia': clase_info.get('materia', 'Clase'),
+            'profesor_nombre': profesor_nombre,
+            'fecha': clase_info.get('fecha'),
+            'hora_inicio': clase_info.get('hora_inicio'),
+            'activa': clase_info.get('activa', False),
+            'latitud_referencia': clase_info.get('latitud_referencia'),
+            'longitud_referencia': clase_info.get('longitud_referencia')
+        }, 200
+        
+    except Exception as e:
+        return {'success': False, 'message': str(e)}, 500
+
