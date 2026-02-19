@@ -1,4 +1,4 @@
-<!-- templates/dashboard_alumno.html - VERSIÓN PRODUCCIÓN CON CONFIRMACIÓN -->
+<!-- templates/dashboard_alumno.html - VERSIÓN CORREGIDA -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -512,7 +512,7 @@
             margin-bottom: 16px;
         }
 
-        /* ===== CONFIRMATION MODAL (NUEVO) ===== */
+        /* ===== CONFIRMATION MODAL ===== */
         .confirmation-icon {
             width: 80px;
             height: 80px;
@@ -936,7 +936,7 @@
         </div>
     </div>
 
-    <!-- CONFIRMATION MODAL (NUEVO) -->
+    <!-- CONFIRMATION MODAL -->
     <div id="confirmacionModal" class="modal">
         <div class="modal-content">
             <div class="confirmation-icon">
@@ -1021,7 +1021,7 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- Scripts -->
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.4/html5-qrcode.min.js"></script>
     <script>
         // ===== VARIABLES GLOBALES =====
         let html5QrCode = null;
@@ -1183,26 +1183,38 @@
                 fecha.charAt(0).toUpperCase() + fecha.slice(1);
         }
 
-        // ===== SCANNER QR =====
+        // ===== SCANNER QR - CORREGIDO =====
         async function abrirScanner() {
             const modal = document.getElementById('scannerModal');
             modal.classList.add('active');
             
-            try {
-                await iniciarScanner();
-            } catch (error) {
-                console.error("Error al iniciar scanner:", error);
-                mostrarErrorCamara();
-            }
+            // Pequeño retraso para asegurar que el modal esté visible
+            setTimeout(async () => {
+                try {
+                    await iniciarScanner();
+                } catch (error) {
+                    console.error("Error al iniciar scanner:", error);
+                    mostrarErrorCamara();
+                }
+            }, 300);
         }
 
         async function iniciarScanner() {
             try {
+                // Limpiar cualquier scanner previo
                 if (html5QrCode) {
-                    await html5QrCode.stop();
-                    html5QrCode.clear();
+                    try {
+                        await html5QrCode.stop();
+                        await html5QrCode.clear();
+                    } catch (e) {
+                        console.log("Error limpiando scanner previo:", e);
+                    }
                     html5QrCode = null;
                 }
+                
+                // Asegurar que el elemento reader esté limpio
+                const readerElement = document.getElementById('reader');
+                readerElement.innerHTML = '';
                 
                 html5QrCode = new Html5Qrcode("reader");
                 
@@ -1220,6 +1232,7 @@
                         throw new Error("No se encontraron cámaras");
                     }
                     
+                    // Buscar cámara trasera
                     let cameraId = devices[0].id;
                     const backCamera = devices.find(device => 
                         device.label.toLowerCase().includes('back') || 
@@ -1239,16 +1252,20 @@
                         onScanError
                     );
                     
+                    scannerActivo = true;
+                    console.log("✅ Scanner iniciado correctamente");
+                    
                 } catch (cameraError) {
+                    console.log("Usando modo environment:", cameraError);
                     await html5QrCode.start(
                         { facingMode: "environment" },
                         config,
                         onScanSuccess,
                         onScanError
                     );
+                    scannerActivo = true;
+                    console.log("✅ Scanner iniciado en modo environment");
                 }
-                
-                scannerActivo = true;
                 
             } catch (error) {
                 console.error("Error iniciando scanner:", error);
@@ -1268,45 +1285,53 @@
         }
 
         function onScanSuccess(decodedText, decodedResult) {
+            console.log("✅ QR escaneado:", decodedText);
+            
             // Vibrar si es posible
             if (navigator.vibrate) {
                 navigator.vibrate(200);
             }
             
-            // Detener scanner
+            // Detener scanner inmediatamente
             detenerScanner();
+            
+            // Cerrar modal del scanner
             cerrarScanner();
             
-            // Procesar el QR
-            procesarQR(decodedText);
+            // Procesar el QR después de un pequeño retraso
+            setTimeout(() => {
+                procesarQR(decodedText);
+            }, 300);
         }
 
         function onScanError(errorMessage) {
             // Solo ignoramos errores normales
+            // console.log("Error de scan:", errorMessage);
         }
 
-        function detenerScanner() {
+        async function detenerScanner() {
             if (html5QrCode && scannerActivo) {
-                html5QrCode.stop()
-                    .then(() => {
-                        html5QrCode.clear();
-                        html5QrCode = null;
-                        scannerActivo = false;
-                    })
-                    .catch(err => {
-                        console.error("Error deteniendo scanner:", err);
-                        scannerActivo = false;
-                    });
+                try {
+                    await html5QrCode.stop();
+                    await html5QrCode.clear();
+                    html5QrCode = null;
+                    scannerActivo = false;
+                    console.log("✅ Scanner detenido");
+                } catch (err) {
+                    console.error("Error deteniendo scanner:", err);
+                    scannerActivo = false;
+                }
             }
         }
 
         function cerrarScanner() {
             detenerScanner();
             document.getElementById('scannerModal').classList.remove('active');
+            // Limpiar el contenido del reader
             document.getElementById('reader').innerHTML = '';
         }
 
-        // ===== NUEVO: PROCESAR QR Y MOSTRAR CONFIRMACIÓN =====
+        // ===== PROCESAR QR Y MOSTRAR CONFIRMACIÓN - CORREGIDO =====
         async function procesarQR(textoQR) {
             mostrarLoading(true);
             
@@ -1315,8 +1340,17 @@
                 let qrInfo;
                 try {
                     qrInfo = JSON.parse(textoQR);
+                    console.log("📦 Datos del QR:", qrInfo);
                 } catch (e) {
+                    console.error("Error parseando QR:", e);
                     mostrarToast('❌ Código QR inválido', 'error');
+                    mostrarLoading(false);
+                    return;
+                }
+                
+                // Validar que tenga los campos necesarios
+                if (!qrInfo.clase_id) {
+                    mostrarToast('❌ QR no contiene ID de clase', 'error');
                     mostrarLoading(false);
                     return;
                 }
@@ -1325,17 +1359,24 @@
                 qrDataPendiente = {
                     texto: textoQR,
                     clase_id: qrInfo.clase_id,
-                    timestamp: qrInfo.timestamp
+                    timestamp: qrInfo.timestamp || Date.now()
                 };
                 
+                console.log("📝 QR pendiente:", qrDataPendiente);
+                
                 // Obtener información de la clase
-                const response = await fetch(`/api/clase/${qrInfo.clase_id}`);
+                const response = await fetch(`/api/clase/${qrInfo.clase_id}`, {
+                    headers: {
+                        'telefono-id': localStorage.getItem('telefono_id')
+                    }
+                });
                 
                 if (!response.ok) {
                     throw new Error('No se pudo obtener información de la clase');
                 }
                 
                 const claseData = await response.json();
+                console.log("📚 Datos de clase:", claseData);
                 
                 // Actualizar modal de confirmación
                 const ahora = new Date();
@@ -1366,9 +1407,12 @@
             }
         }
 
-        // ===== NUEVO: CONFIRMAR Y ENVIAR ASISTENCIA =====
+        // ===== CONFIRMAR Y ENVIAR ASISTENCIA - CORREGIDO =====
         async function confirmarYEnviar() {
-            cerrarConfirmacion();
+            // Cerrar modal de confirmación
+            document.getElementById('confirmacionModal').classList.remove('active');
+            
+            // Mostrar loading
             mostrarLoading(true);
             
             try {
@@ -1399,6 +1443,7 @@
                         
                         latitud = position.coords.latitude;
                         longitud = position.coords.longitude;
+                        console.log("📍 Ubicación obtenida:", latitud, longitud);
                         
                     } catch (geoError) {
                         console.log("Ubicación no disponible:", geoError.message);
@@ -1406,10 +1451,25 @@
                     }
                 }
                 
+                // Validar que tenemos los datos necesarios
+                if (!qrDataPendiente) {
+                    throw new Error('No hay datos de QR pendientes');
+                }
+                
+                console.log("📤 Enviando asistencia:", {
+                    qr_data: qrDataPendiente.texto,
+                    telefono_id: localStorage.getItem('telefono_id'),
+                    usuario_id: usuarioId,
+                    tiene_ubicacion: !!(latitud && longitud)
+                });
+                
                 // Enviar asistencia
                 const response = await fetch('/api/registrar-asistencia', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'telefono-id': localStorage.getItem('telefono_id')
+                    },
                     body: JSON.stringify({
                         qr_data: qrDataPendiente.texto,
                         telefono_id: localStorage.getItem('telefono_id'),
@@ -1420,6 +1480,7 @@
                 });
                 
                 const data = await response.json();
+                console.log("📥 Respuesta del servidor:", data);
                 
                 mostrarLoading(false);
                 
@@ -1433,12 +1494,15 @@
                         await cargarActividadReciente();
                     }, 1000);
                     
+                    // Limpiar datos pendientes
+                    qrDataPendiente = null;
+                    
                 } else {
                     mostrarToast('❌ ' + (data.message || 'Error al registrar asistencia'), 'error');
                 }
                 
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error en confirmarYEnviar:', error);
                 mostrarLoading(false);
                 mostrarToast('❌ Error de conexión', 'error');
             }
@@ -1449,7 +1513,7 @@
             qrDataPendiente = null;
         }
 
-        // ===== SUCCESS MODAL =====
+        // ===== SUCCESS MODAL - CORREGIDO =====
         function mostrarSuccessModal(data) {
             const modal = document.getElementById('successModal');
             const details = document.getElementById('successDetails');
@@ -1469,7 +1533,7 @@
             details.innerHTML = `
                 <div class="success-detail-row">
                     <span class="success-detail-label">📚 Materia</span>
-                    <span class="success-detail-value">${data.materia || 'Clase'}</span>
+                    <span class="success-detail-value">${data.materia || document.getElementById('infoMateria').textContent || 'Clase'}</span>
                 </div>
                 <div class="success-detail-row">
                     <span class="success-detail-label">📅 Fecha</span>
@@ -1499,6 +1563,8 @@
             if (navigator.vibrate) {
                 navigator.vibrate([100, 50, 100]);
             }
+            
+            console.log("✅ Modal de éxito mostrado");
         }
 
         function cerrarSuccessModal() {
@@ -1538,6 +1604,10 @@
             if (confirm('¿Cerrar sesión?')) {
                 if (intervaloActualizacion) {
                     clearInterval(intervaloActualizacion);
+                }
+                // Detener scanner si está activo
+                if (scannerActivo) {
+                    detenerScanner();
                 }
                 localStorage.clear();
                 window.location.href = '/';
