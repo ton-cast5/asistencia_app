@@ -32,7 +32,7 @@ def generar_token():
 
 def validar_matricula(matricula):
     """Valida formato de matrícula"""
-    patron = r'^\d{4}-[A-Z0-9]{4,8}$'
+    patron = r'^[A-Z0-9]{9}$'
     return bool(re.match(patron, matricula))
 
 def validar_email(email):

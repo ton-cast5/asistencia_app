@@ -60,7 +60,7 @@ def handler_register(request):
         
         # Validar matrícula (nuevo formato 8 caracteres)
         if not validar_matricula(data['matricula']):
-            return {'success': False, 'message': 'Matrícula inválida. Formato: 8 caracteres (ej: 232H17024)'}, 400
+            return {'success': False, 'message': 'Matrícula inválida. Formato: 9 caracteres (ej: 232H17024)'}, 400
         
         if not validar_email(data['email']):
             return {'success': False, 'message': 'Email inválido'}, 400
