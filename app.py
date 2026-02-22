@@ -328,7 +328,7 @@ def api_register():
                 return jsonify({'success': False, 'message': f'Falta campo: {field}'}), 400
         
         if not validar_matricula(data['matricula']):
-            return jsonify({'success': False, 'message': 'Matrícula inválida. Formato: 2024-1234'}), 400
+            return jsonify({'success': False, 'message': 'Matrícula inválida. Formato: 111H11111'}), 400
         
         if not validar_email(data['email']):
             return jsonify({'success': False, 'message': 'Email inválido'}), 400
