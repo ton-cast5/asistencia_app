@@ -1,1473 +1,1343 @@
-<!-- templates/dashboard_profesor.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Dashboard Profesor · Asistencia App</title>
-    
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <style>
-        /* ===== RESET & VARIABLES ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #4361ee;
-            --primary-dark: #3a56d4;
-            --primary-light: #4895ef;
-            --secondary: #4cc9f0;
-            --success: #06d6a0;
-            --warning: #ffd166;
-            --danger: #ef476f;
-            --dark: #2b2d42;
-            --gray: #6c757d;
-            --light: #f8f9fa;
-            --white: #ffffff;
-            
-            --gradient-primary: linear-gradient(135deg, #4361ee, #3a0ca3);
-            --gradient-success: linear-gradient(135deg, #06d6a0, #05b588);
-            --gradient-warning: linear-gradient(135deg, #ffd166, #e5b850);
-            --gradient-orange: linear-gradient(135deg, #fb8b24, #e07b20);
-            --gradient-danger: linear-gradient(135deg, #ef476f, #d13d60);
-            
-            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            
-            --radius-sm: 12px;
-            --radius-md: 16px;
-            --radius-lg: 24px;
-            --radius-xl: 32px;
-            
-            --font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            font-family: var(--font-family);
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        /* ===== ANIMACIONES ===== */
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        @keyframes shimmer {
-            0% { background-position: -1000px 0; }
-            100% { background-position: 1000px 0; }
-        }
-
-        /* ===== BACKGROUND DECORATION ===== */
-        .bg-decoration {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 0;
-            overflow: hidden;
-        }
-
-        .bg-circle {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
-        }
-
-        .circle1 {
-            width: 400px;
-            height: 400px;
-            top: -100px;
-            right: -100px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
-            animation: pulse 8s infinite;
-        }
-
-        .circle2 {
-            width: 300px;
-            height: 300px;
-            bottom: -50px;
-            left: -50px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
-            animation: pulse 6s infinite reverse;
-        }
-
-        /* ===== DASHBOARD LAYOUT ===== */
-        .dashboard {
-            display: flex;
-            min-height: 100vh;
-            position: relative;
-            z-index: 10;
-        }
-
-        /* ===== SIDEBAR ===== */
-        .sidebar {
-            width: 280px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: var(--shadow-lg);
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            z-index: 100;
-            border-right: 1px solid rgba(255, 255, 255, 0.5);
-            animation: slideUp 0.5s ease;
-        }
-
-        .sidebar-header {
-            padding: 30px 20px;
-            text-align: center;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .sidebar-header h2 {
-            color: var(--primary);
-            font-size: 1.8rem;
-            margin-bottom: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .sidebar-header p {
-            color: var(--gray);
-            font-size: 0.9rem;
-        }
-
-        .sidebar-menu {
-            flex: 1;
-            padding: 20px;
-            list-style: none;
-        }
-
-        .menu-item {
-            margin-bottom: 10px;
-        }
-
-        .menu-item button {
-            width: 100%;
-            padding: 15px 20px;
-            background: none;
-            border: none;
-            border-radius: var(--radius-md);
-            color: var(--dark);
-            font-size: 1rem;
-            font-weight: 500;
-            text-align: left;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .menu-item button i {
-            width: 24px;
-            color: var(--primary);
-            font-size: 1.2rem;
-        }
-
-        .menu-item button:hover {
-            background: rgba(67, 97, 238, 0.1);
-            transform: translateX(5px);
-        }
-
-        .menu-item.active button {
-            background: var(--gradient-primary);
-            color: white;
-            box-shadow: var(--shadow-md);
-        }
-
-        .menu-item.active button i {
-            color: white;
-        }
-
-        .sidebar-footer {
-            padding: 20px;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        .user-avatar {
-            width: 50px;
-            height: 50px;
-            background: var(--gradient-primary);
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-
-        .user-details h4 {
-            font-size: 1rem;
-            margin-bottom: 2px;
-            color: var(--dark);
-        }
-
-        .user-details p {
-            font-size: 0.8rem;
-            color: var(--gray);
-        }
-
-        .logout-btn {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #ef476f, #d13d60);
-            color: white;
-            border: none;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .logout-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        /* ===== MAIN CONTENT ===== */
-        .main-content {
-            flex: 1;
-            margin-left: 280px;
-            padding: 30px;
-            animation: slideUp 0.5s ease;
-        }
-
-        /* ===== MOBILE HEADER ===== */
-        .mobile-header {
-            display: none;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            padding: 15px 20px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-md);
-        }
-
-        .menu-toggle {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--primary);
-        }
-
-        /* ===== SEMÁFORO CARDS ===== */
-        .semaforo-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .semaforo-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: var(--radius-lg);
-            padding: 25px;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .semaforo-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-        }
-
-        .semaforo-card.verde::before { background: var(--gradient-success); }
-        .semaforo-card.amarillo::before { background: var(--gradient-warning); }
-        .semaforo-card.naranja::before { background: var(--gradient-orange); }
-        .semaforo-card.rojo::before { background: var(--gradient-danger); }
-
-        .semaforo-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-xl);
-        }
-
-        .semaforo-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-            font-size: 1.5rem;
-        }
-
-        .semaforo-card.verde .semaforo-icon {
-            background: rgba(6, 214, 160, 0.1);
-            color: var(--success);
-        }
-
-        .semaforo-card.amarillo .semaforo-icon {
-            background: rgba(255, 209, 102, 0.1);
-            color: var(--warning);
-        }
-
-        .semaforo-card.naranja .semaforo-icon {
-            background: rgba(251, 139, 36, 0.1);
-            color: #fb8b24;
-        }
-
-        .semaforo-card.rojo .semaforo-icon {
-            background: rgba(239, 71, 111, 0.1);
-            color: var(--danger);
-        }
-
-        .semaforo-card h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--dark);
-            margin-bottom: 10px;
-        }
-
-        .semaforo-count {
-            font-size: 2.5rem;
-            font-weight: 800;
-            line-height: 1;
-            margin-bottom: 5px;
-        }
-
-        .semaforo-card.verde .semaforo-count { color: var(--success); }
-        .semaforo-card.amarillo .semaforo-count { color: var(--warning); }
-        .semaforo-card.naranja .semaforo-count { color: #fb8b24; }
-        .semaforo-card.rojo .semaforo-count { color: var(--danger); }
-
-        .semaforo-label {
-            font-size: 0.9rem;
-            color: var(--gray);
-        }
-
-        /* ===== CHARTS GRID ===== */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .chart-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: var(--radius-lg);
-            padding: 25px;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
-
-        .chart-card h3 {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--dark);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .chart-card h3 i {
-            color: var(--primary);
-        }
-
-        .chart-container {
-            position: relative;
-            height: 300px;
-            width: 100%;
-        }
-
-        /* ===== TABLA DE ALUMNOS ===== */
-        .table-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: var(--radius-lg);
-            padding: 25px;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
-
-        .table-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .table-header h3 {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--dark);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .search-box {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--light);
-            padding: 10px 15px;
-            border-radius: var(--radius-md);
-        }
-
-        .search-box i {
-            color: var(--gray);
-        }
-
-        .search-box input {
-            border: none;
-            background: none;
-            outline: none;
-            font-size: 0.9rem;
-            width: 200px;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            text-align: left;
-            padding: 15px;
-            background: var(--gradient-primary);
-            color: white;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        th:first-child { border-radius: 10px 0 0 10px; }
-        th:last-child { border-radius: 0 10px 10px 0; }
-
-        td {
-            padding: 15px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .alumno-row {
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .alumno-row:hover {
-            background: rgba(67, 97, 238, 0.05);
-            transform: scale(1.01);
-        }
-
-        .badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .badge-verde {
-            background: rgba(6, 214, 160, 0.1);
-            color: var(--success);
-            border-left: 3px solid var(--success);
-        }
-
-        .badge-amarillo {
-            background: rgba(255, 209, 102, 0.1);
-            color: #b58b00;
-            border-left: 3px solid var(--warning);
-        }
-
-        .badge-naranja {
-            background: rgba(251, 139, 36, 0.1);
-            color: #b85e00;
-            border-left: 3px solid #fb8b24;
-        }
-
-        .badge-rojo {
-            background: rgba(239, 71, 111, 0.1);
-            color: #b0003a;
-            border-left: 3px solid var(--danger);
-        }
-
-        /* ===== CLASE ACTIVA SECTION ===== */
-        .clase-activa-card {
-            background: var(--gradient-primary);
-            border-radius: var(--radius-lg);
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: var(--shadow-xl);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .clase-info h3 {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .clase-details {
-            display: flex;
-            gap: 20px;
-            margin-top: 10px;
-        }
-
-        .clase-detail {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-        }
-
-        .clase-actions {
-            display: flex;
-            gap: 15px;
-        }
-
-        .btn {
-            padding: 12px 25px;
-            border: none;
-            border-radius: var(--radius-md);
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn-primary {
-            background: white;
-            color: var(--primary);
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        /* ===== QR MODAL ===== */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: var(--radius-lg);
-            max-width: 400px;
-            width: 90%;
-            animation: slideUp 0.3s;
-        }
-
-        .modal-header {
-            padding: 20px;
-            border-bottom: 1px solid #e9ecef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header h2 {
-            font-size: 1.2rem;
-            color: var(--dark);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--gray);
-        }
-
-        .modal-body {
-            padding: 20px;
-            text-align: center;
-        }
-
-        .qr-image {
-            max-width: 300px;
-            margin: 20px auto;
-        }
-
-        .qr-info {
-            color: var(--gray);
-            font-size: 0.9rem;
-            margin: 20px 0;
-        }
-
-        /* ===== LOADING ===== */
-        .loading-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.9);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .loading-overlay.active {
-            display: flex;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid var(--light);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* ===== TOAST ===== */
-        .toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 3000;
-        }
-
-        .toast {
-            background: white;
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-lg);
-            padding: 15px 20px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            min-width: 300px;
-            animation: slideIn 0.3s;
-            border-left: 4px solid var(--success);
-        }
-
-        .toast.error {
-            border-left-color: var(--danger);
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 1024px) {
-            .semaforo-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s;
-            }
-            
-            .sidebar.active {
-                transform: translateX(0);
-            }
-            
-            .main-content {
-                margin-left: 0;
-            }
-            
-            .mobile-header {
-                display: flex;
-            }
-            
-            .semaforo-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .clase-activa-card {
-                flex-direction: column;
-                gap: 20px;
-                text-align: center;
-            }
-            
-            .clase-details {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            
-            .table-header {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .search-box input {
-                width: 100%;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AttendCore — Profesor</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- QR Generator -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#080c14;--sidebar-bg:#0a0f1a;--surface:#0e1420;--surface2:#141c2e;--surface3:#1a2236;
+  --border:#1e2d45;--border2:#243347;
+  --accent:#3b82f6;--accent2:#60a5fa;
+  --green:#22c55e;--red:#ef4444;--yellow:#eab308;--orange:#f97316;--purple:#a855f7;
+  --text:#e2e8f0;--muted:#64748b;--muted2:#94a3b8;
+  --sidebar-w:260px;--font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;
+  --radius:12px;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  background:var(--sidebar-bg);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  height:100vh;overflow:hidden;
+  position:relative;z-index:10;
+}
+.sidebar-brand{
+  padding:24px 20px 20px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.brand-logo{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.brand-icon{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,#1d4ed8,#3b82f6);
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+  box-shadow:0 0 14px rgba(59,130,246,.4);
+}
+.brand-name{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.brand-name span{color:var(--accent2)}
+.brand-role{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+
+.nav{flex:1;padding:16px 12px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.nav::-webkit-scrollbar{display:none}
+
+.nav-section{
+  font-size:10px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.7px;
+  padding:12px 10px 6px;
+}
+
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:10px;
+  cursor:pointer;border:none;background:none;
+  color:var(--muted2);font-family:var(--font);font-size:14px;font-weight:600;
+  width:100%;text-align:left;
+  transition:all .2s;position:relative;
+}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:rgba(59,130,246,.12);color:var(--accent2);border:1px solid rgba(59,130,246,.2)}
+.nav-item.active::before{
+  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:3px;height:60%;background:var(--accent);border-radius:2px;
+}
+.nav-icon{font-size:17px;flex-shrink:0}
+.nav-badge{
+  margin-left:auto;font-size:10px;font-weight:700;
+  padding:2px 7px;border-radius:5px;
+  background:rgba(239,68,68,.15);color:var(--red);
+}
+.nav-badge.live{background:rgba(34,197,94,.15);color:var(--green);animation:badgePulse 2s infinite}
+@keyframes badgePulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+.sidebar-bottom{
+  padding:16px;border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+.profile-mini{
+  display:flex;align-items:center;gap:10px;
+  padding:10px;border-radius:10px;
+  cursor:pointer;transition:background .2s;
+}
+.profile-mini:hover{background:var(--surface2)}
+.mini-avatar{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,#7c3aed,#a855f7);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;flex-shrink:0;
+}
+.mini-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-mat{font-size:11px;color:var(--muted2)}
+.btn-logout{
+  width:100%;padding:10px;margin-top:8px;
+  background:transparent;border:1px solid var(--border2);
+  border-radius:var(--radius);color:var(--muted2);
+  font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;
+  transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn-logout:hover{border-color:var(--red);color:var(--red)}
+
+/* ── MAIN ── */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;height:100vh}
+
+.top-header{
+  padding:20px 28px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.page-title{font-size:22px;font-weight:700;letter-spacing:-.3px}
+.page-sub{font-size:13px;color:var(--muted2);margin-top:2px}
+.header-actions{display:flex;align-items:center;gap:10px}
+
+.main-scroll{flex:1;overflow-y:auto;padding:24px 28px 40px}
+.main-scroll::-webkit-scrollbar{width:6px}
+.main-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ── VIEWS ── */
+.view{display:none;animation:fadeIn .3s ease both}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ── DASHBOARD VIEW ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.kpi-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:20px 18px;position:relative;overflow:hidden;
+}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0}
+.kpi-card.green::before{background:var(--green)}
+.kpi-card.yellow::before{background:var(--yellow)}
+.kpi-card.orange::before{background:var(--orange)}
+.kpi-card.red::before{background:var(--red)}
+.kpi-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.kpi-num{font-size:36px;font-weight:700}
+.kpi-card.green .kpi-num{color:var(--green)}
+.kpi-card.yellow .kpi-num{color:var(--yellow)}
+.kpi-card.orange .kpi-num{color:var(--orange)}
+.kpi-card.red .kpi-num{color:var(--red)}
+.kpi-sub{font-size:12px;color:var(--muted2);margin-top:4px}
+
+.tabla-container{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;
+}
+.tabla-header{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.tabla-title{font-size:16px;font-weight:700}
+.search-input{
+  padding:8px 14px 8px 36px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-family:var(--font);font-size:13px;
+  outline:none;width:220px;transition:border-color .2s;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:10px center;
+}
+.search-input:focus{border-color:var(--accent)}
+
+table{width:100%;border-collapse:collapse}
+thead th{
+  padding:11px 16px;text-align:left;
+  font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;
+  background:var(--surface2);border-bottom:1px solid var(--border);
+}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+tbody td{padding:12px 16px;font-size:13px}
+.status-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;
+}
+.badge-green{background:rgba(34,197,94,.12);color:var(--green)}
+.badge-yellow{background:rgba(234,179,8,.12);color:var(--yellow)}
+.badge-orange{background:rgba(249,115,22,.12);color:var(--orange)}
+.badge-red{background:rgba(239,68,68,.12);color:var(--red)}
+
+.pct-bar-wrap{display:flex;align-items:center;gap:8px}
+.pct-bar{flex:1;height:6px;background:var(--border2);border-radius:3px;overflow:hidden}
+.pct-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.pct-text-sm{font-size:12px;font-weight:700;min-width:32px}
+
+/* ── LIVE VIEW ── */
+.live-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.live-left{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:24px;
+}
+.live-right{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:24px;display:flex;flex-direction:column;
+}
+.live-title{font-size:17px;font-weight:700;margin-bottom:6px}
+.live-sub{font-size:13px;color:var(--muted2);margin-bottom:20px}
+
+.status-indicator{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:14px;font-weight:600;
+}
+.status-dot{
+  width:10px;height:10px;border-radius:50%;background:var(--muted);flex-shrink:0;
+}
+.status-dot.active{background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.5s infinite}
+.status-dot.inactive{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.qr-container{
+  display:flex;align-items:center;justify-content:center;
+  background:#fff;border-radius:16px;padding:20px;
+  margin-bottom:20px;min-height:220px;
+  position:relative;
+}
+#qrCanvas{/* qrcode lib crea un canvas aquí */}
+.qr-placeholder{
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  color:var(--muted2);font-size:14px;
+}
+.qr-placeholder span{font-size:48px}
+
+.timer-badge{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);
+  border-radius:10px;padding:10px;font-size:13px;font-weight:700;
+  color:var(--accent2);margin-bottom:16px;font-family:var(--mono);
+}
+
+.btn-iniciar{
+  width:100%;padding:15px;border:none;border-radius:var(--radius);
+  font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;
+  background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;
+  box-shadow:0 4px 16px rgba(34,197,94,.3);transition:all .15s;
+}
+.btn-iniciar:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(34,197,94,.4)}
+.btn-terminar{
+  width:100%;padding:15px;border:none;border-radius:var(--radius);
+  font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;
+  background:linear-gradient(135deg,#b91c1c,#ef4444);color:#fff;
+  box-shadow:0 4px 16px rgba(239,68,68,.3);transition:all .15s;
+  display:none;
+}
+.btn-terminar:hover{transform:translateY(-1px)}
+.btn-terminar.show{display:block}
+.btn-iniciar.hide{display:none}
+
+/* LISTA ASISTENCIAS LIVE */
+.live-count{
+  font-size:13px;font-weight:600;color:var(--muted2);margin-bottom:14px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.live-count strong{color:var(--green);font-size:22px}
+.asistencia-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;min-height:200px}
+.asistencia-list::-webkit-scrollbar{width:4px}
+.asistencia-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+.asis-item{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;
+  display:flex;align-items:center;gap:10px;
+  animation:slideIn .3s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+.asis-avatar{
+  width:34px;height:34px;border-radius:8px;
+  background:linear-gradient(135deg,#1d4ed8,#3b82f6);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;flex-shrink:0;
+}
+.asis-info{flex:1;min-width:0}
+.asis-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.asis-mat{font-size:11px;color:var(--muted2)}
+.asis-time{font-size:11px;color:var(--accent2);font-family:var(--mono);flex-shrink:0}
+
+.empty-live{
+  text-align:center;padding:40px 20px;color:var(--muted);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+
+/* ── REPORTES ── */
+.reportes-top{margin-bottom:20px}
+.reporte-form{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:24px;margin-bottom:20px;
+}
+.form-grid{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}
+.field{position:relative}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px}
+.field input,.field select{
+  width:100%;padding:10px 14px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-family:var(--font);font-size:14px;
+  outline:none;transition:border-color .2s;-webkit-appearance:none;
+}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+
+.btn-pdf{
+  padding:11px 20px;background:linear-gradient(135deg,#7c3aed,#a855f7);
+  border:none;border-radius:10px;color:#fff;
+  font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;gap:8px;white-space:nowrap;
+  box-shadow:0 4px 14px rgba(168,85,247,.3);transition:all .15s;
+}
+.btn-pdf:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(168,85,247,.4)}
+.btn-pdf.loading{opacity:.7;pointer-events:none}
+
+.reporte-preview{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;
+}
+.preview-scroll{overflow-x:auto}
+
+/* BTN genérico */
+.btn{
+  padding:9px 18px;border:none;border-radius:10px;
+  font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;
+  transition:all .15s;display:inline-flex;align-items:center;gap:6px;
+}
+.btn-primary{background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;box-shadow:0 3px 12px rgba(59,130,246,.3)}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-ghost{background:var(--surface2);border:1px solid var(--border2);color:var(--muted2)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent2)}
+
+/* TOAST */
+.toast-wrap{position:fixed;top:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px;max-width:340px}
+.toast{
+  background:var(--surface);border-radius:12px;padding:13px 16px;
+  display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;
+  box-shadow:0 8px 24px rgba(0,0,0,.5);border:1px solid var(--border2);
+  animation:toastIn .3s ease;
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+.toast.ok{border-color:rgba(34,197,94,.3);color:var(--green)}
+.toast.err{border-color:rgba(239,68,68,.3);color:var(--red)}
+.toast.info{border-color:rgba(59,130,246,.3);color:var(--accent2)}
+
+/* LOADING */
+.loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.loading-overlay.active{display:flex}
+.spinner{width:44px;height:44px;border:3px solid rgba(59,130,246,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* MOBILE RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{
+    position:fixed;left:-260px;z-index:100;transition:left .3s ease;
+  }
+  .sidebar.open{left:0}
+  .main{width:100%}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .live-layout{grid-template-columns:1fr}
+  .mobile-menu-btn{display:flex !important}
+  .form-grid{grid-template-columns:1fr}
+}
+.mobile-menu-btn{
+  display:none;
+  padding:8px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;cursor:pointer;font-size:18px;
+}
+</style>
 </head>
 <body>
-    <!-- Background Decorations -->
-    <div class="bg-decoration">
-        <div class="bg-circle circle1"></div>
-        <div class="bg-circle circle2"></div>
+
+<div class="toast-wrap" id="toasts"></div>
+<div class="loading-overlay" id="loading"><div class="spinner"></div><div style="font-size:14px;color:var(--muted2)" id="loadingText">Cargando…</div></div>
+
+<!-- ── SIDEBAR ── -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-logo">
+      <div class="brand-icon">📡</div>
+      <div class="brand-name">Attend<span>Core</span></div>
     </div>
+    <div class="brand-role">Panel Docente</div>
+  </div>
 
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
-        <p style="color: var(--dark);">Cargando datos reales...</p>
+  <div class="nav">
+    <div class="nav-section">Principal</div>
+    <button class="nav-item active" onclick="setView('dashboard')" id="navDashboard">
+      <span class="nav-icon">📊</span> Dashboard
+    </button>
+    <button class="nav-item" onclick="setView('live')" id="navLive">
+      <span class="nav-icon">📡</span> Asistencia en vivo
+      <span class="nav-badge live" id="liveBadge" style="display:none">LIVE</span>
+    </button>
+
+    <div class="nav-section">Materias</div>
+    <button class="nav-item" onclick="setView('materias')" id="navMaterias">
+      <span class="nav-icon">📚</span> Mis materias
+    </button>
+
+    <div class="nav-section">Reportes</div>
+    <button class="nav-item" onclick="setView('reportes')" id="navReportes">
+      <span class="nav-icon">📄</span> Generar reporte
+    </button>
+    <button class="nav-item" onclick="setView('alumnos')" id="navAlumnos">
+      <span class="nav-icon">🎓</span> Lista de alumnos
+    </button>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="profile-mini" id="profileMini">
+      <div class="mini-avatar" id="miniAvatar">?</div>
+      <div>
+        <div class="mini-name" id="miniName">Cargando…</div>
+        <div class="mini-mat" id="miniMat">Profesor</div>
+      </div>
     </div>
+    <button class="btn-logout" onclick="cerrarSesion()">🚪 Cerrar sesión</button>
+  </div>
+</div>
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
-
-    <!-- Dashboard -->
-    <div class="dashboard">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h2>
-                    <i class="fas fa-qrcode"></i>
-                    AsistenciaApp
-                </h2>
-                <p>Panel del Profesor</p>
-            </div>
-            
-            <ul class="sidebar-menu">
-                <li class="menu-item active" id="menu-dashboard">
-                    <button onclick="cargarPagina('dashboard')">
-                        <i class="fas fa-chart-pie"></i>
-                        Dashboard
-                    </button>
-                </li>
-                <li class="menu-item" id="menu-asistencias">
-                    <button onclick="cargarPagina('asistencias')">
-                        <i class="fas fa-calendar-check"></i>
-                        Asistencias en Vivo
-                    </button>
-                </li>
-                <li class="menu-item" id="menu-historial">
-                    <button onclick="cargarPagina('historial')">
-                        <i class="fas fa-history"></i>
-                        Historial
-                    </button>
-                </li>
-                <li class="menu-item" id="menu-reportes">
-                    <button onclick="cargarPagina('reportes')">
-                        <i class="fas fa-file-alt"></i>
-                        Reportes
-                    </button>
-                </li>
-                <li class="menu-item" id="menu-config">
-                    <button onclick="cargarPagina('config')">
-                        <i class="fas fa-cog"></i>
-                        Configuración
-                    </button>
-                </li>
-            </ul>
-            
-            <div class="sidebar-footer">
-                <div class="user-info">
-                    <div class="user-avatar" id="profesorAvatar">P</div>
-                    <div class="user-details">
-                        <h4 id="profesorNombre">Cargando...</h4>
-                        <p id="profesorEmail">cargando@email.com</p>
-                    </div>
-                </div>
-                <button class="logout-btn" onclick="cerrarSesion()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Cerrar Sesión
-                </button>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content" id="mainContent">
-            <!-- Mobile Header -->
-            <div class="mobile-header">
-                <button class="menu-toggle" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h2>Dashboard</h2>
-            </div>
-
-            <!-- Clase Activa Section -->
-            <div class="clase-activa-card" id="claseActivaSection">
-                <div class="clase-info">
-                    <h3>
-                        <i class="fas fa-video"></i>
-                        <span id="claseTitulo">No hay clase activa</span>
-                    </h3>
-                    <div class="clase-details" id="claseDetalles" style="display: none;">
-                        <span class="clase-detail">
-                            <i class="fas fa-calendar"></i>
-                            <span id="claseFecha">2024-02-14</span>
-                        </span>
-                        <span class="clase-detail">
-                            <i class="fas fa-clock"></i>
-                            <span id="claseHora">10:30 AM</span>
-                        </span>
-                        <span class="clase-detail">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span id="claseUbicacion">15.2, -85.3</span>
-                        </span>
-                    </div>
-                </div>
-                <div class="clase-actions">
-                    <button class="btn btn-success" onclick="iniciarClase()" id="btnIniciarClase">
-                        <i class="fas fa-play"></i>
-                        Iniciar Clase
-                    </button>
-                    <button class="btn btn-danger" onclick="terminarClase()" id="btnTerminarClase" style="display: none;">
-                        <i class="fas fa-stop"></i>
-                        Terminar Clase
-                    </button>
-                    <button class="btn btn-primary" onclick="verQR()" id="btnVerQR" style="display: none;">
-                        <i class="fas fa-qrcode"></i>
-                        Ver QR
-                    </button>
-                </div>
-            </div>
-
-            <!-- Semáforo Cards -->
-            <div class="semaforo-grid">
-                <div class="semaforo-card verde">
-                    <div class="semaforo-icon">
-                        <i class="fas fa-smile"></i>
-                    </div>
-                    <h3>Asistencia Excelente</h3>
-                    <div class="semaforo-count" id="verde-count">0</div>
-                    <div class="semaforo-label">alumnos (>80%)</div>
-                </div>
-                
-                <div class="semaforo-card amarillo">
-                    <div class="semaforo-icon">
-                        <i class="fas fa-meh"></i>
-                    </div>
-                    <h3>En Riesgo</h3>
-                    <div class="semaforo-count" id="amarillo-count">0</div>
-                    <div class="semaforo-label">alumnos (50-80%)</div>
-                </div>
-                
-                <div class="semaforo-card naranja">
-                    <div class="semaforo-icon">
-                        <i class="fas fa-frown"></i>
-                    </div>
-                    <h3>Sin Ordinario</h3>
-                    <div class="semaforo-count" id="naranja-count">0</div>
-                    <div class="semaforo-label">alumnos (30-50%)</div>
-                </div>
-                
-                <div class="semaforo-card rojo">
-                    <div class="semaforo-icon">
-                        <i class="fas fa-angry"></i>
-                    </div>
-                    <h3>Sin Extraordinario</h3>
-                    <div class="semaforo-count" id="rojo-count">0</div>
-                    <div class="semaforo-label">alumnos (<30%)</div>
-                </div>
-            </div>
-
-            <!-- Charts Grid -->
-            <div class="charts-grid">
-                <div class="chart-card">
-                    <h3>
-                        <i class="fas fa-chart-pie"></i>
-                        Distribución de Asistencia
-                    </h3>
-                    <div class="chart-container">
-                        <canvas id="graficoAsistencia"></canvas>
-                    </div>
-                </div>
-                
-                <div class="chart-card">
-                    <h3>
-                        <i class="fas fa-chart-line"></i>
-                        Top 5 Alumnos
-                    </h3>
-                    <div class="chart-container">
-                        <canvas id="graficoTop"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tabla de Alumnos -->
-            <div class="table-card">
-                <div class="table-header">
-                    <h3>
-                        <i class="fas fa-users"></i>
-                        Lista de Alumnos
-                    </h3>
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="buscarAlumno" placeholder="Buscar alumno..." onkeyup="filtrarAlumnos()">
-                    </div>
-                </div>
-                
-                <div class="table-responsive">
-                    <table id="tablaAlumnos">
-                        <thead>
-                            <tr>
-                                <th>Matrícula</th>
-                                <th>Nombre</th>
-                                <th>Asistencias</th>
-                                <th>Faltas</th>
-                                <th>Porcentaje</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="alumnosBody">
-                            <tr>
-                                <td colspan="6" style="text-align: center; padding: 40px;">
-                                    <div class="spinner" style="margin: 0 auto;"></div>
-                                    <p>Cargando alumnos...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
+<!-- ── MAIN ── -->
+<div class="main">
+  <div class="top-header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="mobile-menu-btn" onclick="toggleSidebar()" style="display:none;background:var(--surface2);border:1px solid var(--border);padding:8px 10px;border-radius:10px;cursor:pointer;font-size:18px;color:var(--text)">☰</button>
+      <div>
+        <div class="page-title" id="pageTitle">Dashboard</div>
+        <div class="page-sub" id="pageSub">Resumen general del grupo</div>
+      </div>
     </div>
+    <div class="header-actions">
+      <div id="livePill" style="display:none;padding:6px 12px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);border-radius:8px;font-size:12px;font-weight:700;color:var(--green);display:flex;align-items:center;gap:6px">
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite;display:inline-block"></span>
+        Clase activa
+      </div>
+    </div>
+  </div>
 
-    <!-- Modal QR -->
-    <div class="modal" id="qrModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>
-                    <i class="fas fa-qrcode" style="color: var(--primary);"></i>
-                    Código QR de la Clase
-                </h2>
-                <button class="modal-close" onclick="cerrarQR()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <img id="qrImagen" class="qr-image" src="" alt="QR de clase">
-                <p class="qr-info" id="qrInfo">
-                    Escanea este código para registrar asistencia
-                </p>
-                <div style="display: flex; gap: 10px; justify-content: center;">
-                    <button class="btn btn-primary" onclick="imprimirQR()">
-                        <i class="fas fa-print"></i> Imprimir
-                    </button>
-                    <button class="btn btn-success" onclick="descargarQR()">
-                        <i class="fas fa-download"></i> Descargar
-                    </button>
-                </div>
-            </div>
+  <div class="main-scroll">
+
+    <!-- ── VIEW: DASHBOARD ── -->
+    <div class="view active" id="viewDashboard">
+      <div class="kpi-grid">
+        <div class="kpi-card green">
+          <div class="kpi-label">✅ Excelente</div>
+          <div class="kpi-num" id="kpiExcelente">–</div>
+          <div class="kpi-sub">≥ 90% asistencia</div>
         </div>
+        <div class="kpi-card yellow">
+          <div class="kpi-label">⚠️ En riesgo</div>
+          <div class="kpi-num" id="kpiRiesgo">–</div>
+          <div class="kpi-sub">80% – 89%</div>
+        </div>
+        <div class="kpi-card orange">
+          <div class="kpi-label">🟠 Sin ordinario</div>
+          <div class="kpi-num" id="kpiSinOrd">–</div>
+          <div class="kpi-sub">60% – 79%</div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-label">🔴 Sin extrao.</div>
+          <div class="kpi-num" id="kpiSinExt">–</div>
+          <div class="kpi-sub">< 60%</div>
+        </div>
+      </div>
+
+      <div class="tabla-container">
+        <div class="tabla-header">
+          <div class="tabla-title">Todos los alumnos <span id="totalTag" style="font-size:12px;color:var(--muted2);font-weight:500;margin-left:4px"></span></div>
+          <input type="text" class="search-input" placeholder="Buscar alumno…" oninput="filtrarTabla(this.value)">
+        </div>
+        <div style="overflow-x:auto">
+          <table id="tablaAlumnos">
+            <thead>
+              <tr>
+                <th>Alumno</th>
+                <th>Matrícula</th>
+                <th>Asistencias</th>
+                <th>Porcentaje</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyAlumnos">
+              <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Cargando datos…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
-    <script>
-        // ===== VARIABLES GLOBALES =====
-        let usuarioActual = null;
-        let claseActiva = null;
-        let chartAsistencia = null;
-        let chartTop = null;
-        let intervaloActualizacion = null;
+    <!-- ── VIEW: LIVE ── -->
+    <div class="view" id="viewLive">
+      <div class="live-layout">
 
-        // ===== INICIALIZACIÓN =====
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!verificarSesion()) return;
-            cargarDatosProfesor();
-            cargarDashboard();
-            verificarClaseActiva();
-            
-            // Actualizar cada 30 segundos
-            intervaloActualizacion = setInterval(() => {
-                cargarDashboard();
-                verificarClaseActiva();
-            }, 30000);
-        });
+        <!-- LEFT: QR + controles -->
+        <div class="live-left">
+          <div class="live-title">Asistencia en vivo</div>
+          <div class="live-sub">Genera el QR para que los alumnos registren su asistencia</div>
 
-        // ===== VERIFICAR SESIÓN =====
-        function verificarSesion() {
-            const telefonoId = localStorage.getItem('telefono_id');
-            const userData = localStorage.getItem('user_data');
-            
-            if (!telefonoId || !userData) {
-                window.location.href = '/';
-                return false;
-            }
-            
-            try {
-                usuarioActual = JSON.parse(userData);
-                if (usuarioActual.rol !== 'profesor') {
-                    window.location.href = '/dashboard_alumno';
-                    return false;
-                }
-                return true;
-            } catch (e) {
-                cerrarSesion();
-                return false;
-            }
+          <div class="status-indicator">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Sin clase activa</span>
+          </div>
+
+          <div class="timer-badge" id="timerBadge" style="display:none">
+            ⏱️ Tiempo activo: <span id="timerText">00:00</span>
+          </div>
+
+          <div class="qr-container" id="qrContainer">
+            <div class="qr-placeholder" id="qrPlaceholder">
+              <span>📋</span>
+              <span>El QR aparecerá aquí al iniciar la clase</span>
+            </div>
+            <div id="qrCanvas"></div>
+          </div>
+
+          <!-- FORMULARIO INICIO -->
+          <div id="formIniciar">
+            <div class="field" style="margin-bottom:12px">
+              <label>Materia</label>
+              <select id="claseMateria" style="padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:14px;outline:none;width:100%;transition:border-color .2s;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center">
+                <option value="">— Sin materia específica —</option>
+              </select>
+            </div>
+            <div class="field" style="margin-bottom:12px">
+              <label>Tema / descripción (opcional)</label>
+              <input type="text" id="claseTitle" placeholder="ej. Unidad 3: Bases de datos relacionales">
+            </div>
+            <button class="btn-iniciar" id="btnIniciar" onclick="iniciarClase()">
+              ▶️ Iniciar clase y generar QR
+            </button>
+          </div>
+
+          <button class="btn-terminar" id="btnTerminar" onclick="terminarClase()">
+            ⏹️ Terminar clase e invalidar QR
+          </button>
+        </div>
+
+        <!-- RIGHT: Lista en tiempo real -->
+        <div class="live-right">
+          <div class="live-count">
+            <div>Asistencias registradas</div>
+            <strong id="liveCount">0</strong>
+          </div>
+          <div class="asistencia-list" id="asistenciaList">
+            <div class="empty-live">
+              <span style="font-size:36px">👥</span>
+              <span>Los alumnos aparecerán aquí al escanear el QR</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── VIEW: REPORTES ── -->
+    <div class="view" id="viewReportes">
+      <div class="reporte-form">
+        <div class="live-title" style="margin-bottom:6px">Generar reporte PDF</div>
+        <div class="live-sub" style="margin-bottom:20px">Lista de asistencia ordenada alfabéticamente con todas las fechas de clase</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end">
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;margin-bottom:7px">Filtrar por materia</label>
+            <select id="reporteMateria" onchange="cargarReporte()" style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:14px;outline:none;-webkit-appearance:none">
+              <option value="">— Todas las materias —</option>
+            </select>
+          </div>
+          <div style="font-size:13px;color:var(--muted2)">
+            Marca <strong style="color:var(--green)">P</strong> (Presente), <strong style="color:var(--red)">F</strong> (Falta) o <strong style="color:var(--yellow)">J</strong> (Justificada) por cada clase generada.
+          </div>
+          <button class="btn-pdf" id="btnPDF" onclick="generarPDF()">
+            📄 Descargar PDF
+          </button>
+        </div>
+      </div>
+
+      <div class="reporte-preview tabla-container">
+        <div class="tabla-header">
+          <div class="tabla-title">Previsualización del reporte</div>
+          <span style="font-size:12px;color:var(--muted2)" id="reporteInfo">Cargando…</span>
+        </div>
+        <div class="preview-scroll">
+          <table id="tablaReporte" style="min-width:600px">
+            <thead id="reporteHead"></thead>
+            <tbody id="reporteBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VIEW: ALUMNOS ── -->
+    <div class="view" id="viewAlumnos">
+      <div class="tabla-container">
+        <div class="tabla-header">
+          <div class="tabla-title">Lista completa de alumnos</div>
+          <span id="alumnosTotal" style="font-size:13px;color:var(--muted2)"></span>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="tablaAlumnosFull">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Apellido Paterno</th>
+                <th>Apellido Materno</th>
+                <th>Nombre</th>
+                <th>Matrícula</th>
+                <th>% Asistencia</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyFull">
+              <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VIEW: MATERIAS ── -->
+    <div class="view" id="viewMaterias">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div>
+          <div class="page-title" style="font-size:18px">Mis materias</div>
+          <div style="font-size:13px;color:var(--muted2);margin-top:2px">Agrega o edita las materias que impartes</div>
+        </div>
+        <button class="btn btn-primary" onclick="abrirModalMateria()">+ Nueva materia</button>
+      </div>
+
+      <div class="tabla-container" id="materiasContainer">
+        <div class="tabla-header">
+          <div class="tabla-title">Materias registradas</div>
+          <span id="materiasCount" style="font-size:12px;color:var(--muted2)"></span>
+        </div>
+        <div id="materiasBody" style="padding:8px 0">
+          <div style="text-align:center;padding:40px;color:var(--muted)">Cargando materias…</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-scroll -->
+
+  <!-- MODAL NUEVA MATERIA -->
+  <div id="modalMateriaOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)">
+    <div style="width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:28px 24px;animation:popIn .3s ease">
+      <div style="font-size:18px;font-weight:700;margin-bottom:20px" id="modalMateriaTitle">Nueva materia</div>
+      <input type="hidden" id="editMateriaId">
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px">Nombre de la materia *</label>
+        <input type="text" id="materiaNombre" placeholder="ej. Programación Web" style="width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:14px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="margin-bottom:22px">
+        <label style="display:block;font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px">Código / clave</label>
+        <input type="text" id="materiaCodigo" placeholder="ej. ISC-407" style="width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:14px;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="cerrarModalMateria()" style="flex:1;padding:12px;background:transparent;border:1px solid var(--border2);border-radius:10px;color:var(--muted2);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer">Cancelar</button>
+        <button onclick="guardarMateria()" style="flex:1;padding:12px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border:none;border-radius:10px;color:#fff;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ── STATE ─────────────────────────────────
+const API = '';
+let user = null;
+let dashData = null;
+let claseActiva = null;
+let timerInterval = null;
+let timerSeconds = 0;
+let liveInterval = null;
+let reporteData = null;
+let allAlumnos = [];
+let materias = [];  // ← NUEVO: lista de materias del profesor
+
+// ── INIT ──────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  const saved = localStorage.getItem('user');
+  if (!saved) return redirect();
+  user = JSON.parse(saved);
+  if (user.rol !== 'profesor') return redirect('/dashboard/alumno');
+
+  renderProfile();
+  showLoading('Cargando dashboard…');
+
+  await Promise.all([
+    cargarDashboard(),
+    verificarClaseActiva(),
+    cargarMaterias(),  // ← NUEVO
+  ]);
+
+  hideLoading();
+
+  // Actualizar live cada 5 segundos si hay clase activa
+  liveInterval = setInterval(actualizarLive, 5000);
+});
+
+function redirect(p='/') { window.location.href = p; }
+
+// ── PROFILE ───────────────────────────────
+function renderProfile() {
+  const partes = (user.nombre || '').split(' ');
+  const initials = partes.map(p=>p[0]||'').join('').slice(0,2).toUpperCase();
+  document.getElementById('miniAvatar').textContent = initials || '?';
+  document.getElementById('miniName').textContent = user.nombre || '–';
+  document.getElementById('miniMat').textContent = user.matricula || 'Profesor';
+}
+
+// ── NAVIGATION ────────────────────────────
+const viewTitles = {
+  dashboard: ['Dashboard', 'Resumen general del grupo'],
+  live: ['Asistencia en vivo', 'Genera el QR y gestiona la clase activa'],
+  materias: ['Mis materias', 'Gestiona las materias que impartes'],
+  reportes: ['Generar reporte', 'Exporta la lista de asistencia en PDF'],
+  alumnos: ['Lista de alumnos', 'Todos los estudiantes registrados'],
+};
+
+function setView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const viewId = `view${name.charAt(0).toUpperCase()+name.slice(1)}`;
+  const navId  = `nav${name.charAt(0).toUpperCase()+name.slice(1)}`;
+  if (document.getElementById(viewId)) document.getElementById(viewId).classList.add('active');
+  if (document.getElementById(navId))  document.getElementById(navId).classList.add('active');
+
+  const [title, sub] = viewTitles[name] || [name,''];
+  document.getElementById('pageTitle').textContent = title;
+  document.getElementById('pageSub').textContent = sub;
+
+  if (name === 'reportes') cargarReporte();
+  if (name === 'alumnos')  renderAlumnosFull();
+  if (name === 'materias') renderMaterias();
+  if (window.innerWidth <= 768) toggleSidebar();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ── DASHBOARD ─────────────────────────────
+async function cargarDashboard() {
+  try {
+    const r = await fetch(`${API}/api/profesor/${user.id}/dashboard`);
+    const data = await r.json();
+    if (!data.success) return;
+    dashData = data.dashboard;
+    allAlumnos = dashData.alumnos || [];
+
+    const c = dashData.categorias;
+    document.getElementById('kpiExcelente').textContent = c.excelente;
+    document.getElementById('kpiRiesgo').textContent = c.riesgo;
+    document.getElementById('kpiSinOrd').textContent = c.sin_ordinario;
+    document.getElementById('kpiSinExt').textContent = c.sin_extraordinario;
+    document.getElementById('totalTag').textContent = `(${dashData.total_alumnos} alumnos)`;
+
+    renderTabla(allAlumnos);
+  } catch(e) { console.error('Dashboard error:', e); }
+}
+
+function renderTabla(alumnos) {
+  const tbody = document.getElementById('tbodyAlumnos');
+  if (!alumnos.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Sin alumnos registrados</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = alumnos.map(a => {
+    const pct = a.porcentaje || 0;
+    const color = pct>=90?'#22c55e':pct>=80?'#eab308':pct>=60?'#f97316':'#ef4444';
+    const badge = a.estado === 'excelente' ? '<span class="status-badge badge-green">✅ Excelente</span>'
+                : a.estado === 'riesgo'    ? '<span class="status-badge badge-yellow">⚠️ En riesgo</span>'
+                : a.estado === 'sin_ordinario' ? '<span class="status-badge badge-orange">🟠 Sin ordinario</span>'
+                : '<span class="status-badge badge-red">🔴 Sin extrao.</span>';
+    return `
+      <tr>
+        <td style="font-weight:600">${a.nombre || '–'}</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--accent2)">${a.matricula}</td>
+        <td style="font-weight:600">${a.asistencias}</td>
+        <td>
+          <div class="pct-bar-wrap">
+            <div class="pct-bar"><div class="pct-fill" style="width:${pct}%;background:${color}"></div></div>
+            <span class="pct-text-sm" style="color:${color}">${pct}%</span>
+          </div>
+        </td>
+        <td>${badge}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filtrarTabla(q) {
+  const term = q.toLowerCase();
+  const filtered = allAlumnos.filter(a =>
+    (a.nombre||'').toLowerCase().includes(term) ||
+    (a.matricula||'').toLowerCase().includes(term)
+  );
+  renderTabla(filtered);
+}
+
+// ── LIVE ──────────────────────────────────
+async function verificarClaseActiva() {
+  try {
+    const r = await fetch(`${API}/api/clase/activa?profesor_id=${user.id}`);
+    const data = await r.json();
+    if (data.clase) {
+      claseActiva = data.clase;
+      mostrarClaseActiva(data.clase, data.asistencias || []);
+    }
+  } catch(e) {}
+}
+
+function mostrarClaseActiva(clase, asistencias) {
+  document.getElementById('statusDot').classList.add('active');
+  document.getElementById('statusText').textContent = `Clase activa: ${clase.titulo || 'En curso'}`;
+  document.getElementById('timerBadge').style.display = 'flex';
+  document.getElementById('btnIniciar').classList.add('hide');
+  document.getElementById('btnTerminar').classList.add('show');
+  document.getElementById('formIniciar').style.display = 'none';
+  document.getElementById('liveBadge').style.display = 'flex';
+  document.getElementById('livePill').style.display = 'flex';
+
+  // Generar QR con el token
+  mostrarQR(clase.qr_code);
+
+  // Lista
+  renderAsistencias(asistencias);
+
+  // Timer
+  if (clase.hora_inicio) {
+    const [h,m,s] = clase.hora_inicio.split(':').map(Number);
+    const inicio = new Date();
+    inicio.setHours(h,m,s);
+    timerSeconds = Math.floor((Date.now() - inicio.getTime()) / 1000);
+  }
+  startTimer();
+}
+
+function mostrarQR(token) {
+  const container = document.getElementById('qrCanvas');
+  container.innerHTML = '';
+  document.getElementById('qrPlaceholder').style.display = 'none';
+
+  const qrData = JSON.stringify({
+    qr_token: token,
+    timestamp: Date.now(),
+  });
+
+  new QRCode(container, {
+    text: qrData,
+    width: 200,
+    height: 200,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H,
+  });
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timerSeconds++;
+    const m = String(Math.floor(timerSeconds/60)).padStart(2,'0');
+    const s = String(timerSeconds%60).padStart(2,'0');
+    document.getElementById('timerText').textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+async function iniciarClase() {
+  const titulo    = document.getElementById('claseTitle').value.trim() || 'Clase';
+  const materiaId = document.getElementById('claseMateria').value || null;
+  const materiaSeleccionada = materias.find(m => String(m.id) === String(materiaId));
+  const tituloFinal = materiaSeleccionada
+    ? `${materiaSeleccionada.nombre}${titulo ? ' — ' + titulo : ''}`
+    : titulo;
+
+  showLoading('Iniciando clase…');
+
+  let lat=null, lng=null;
+  try {
+    const pos = await new Promise((res,rej) =>
+      navigator.geolocation.getCurrentPosition(res,rej,{timeout:5000})
+    );
+    lat = pos.coords.latitude;
+    lng = pos.coords.longitude;
+  } catch(e) { /* sin ubicación */ }
+
+  try {
+    const r = await fetch(`${API}/api/clase/iniciar`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        profesor_id: user.id,
+        titulo: tituloFinal,
+        materia_id: materiaId ? parseInt(materiaId) : null,
+        latitud: lat,
+        longitud: lng
+      })
+    });
+    const data = await r.json();
+    hideLoading();
+
+    if (data.success) {
+      claseActiva = data.clase;
+      mostrarClaseActiva(data.clase, []);
+      setView('live');
+      toast(`✅ Clase iniciada: ${tituloFinal}`, 'ok');
+    } else {
+      toast('❌ ' + data.message, 'err');
+    }
+  } catch(e) {
+    hideLoading();
+    toast('Error de conexión', 'err');
+  }
+}
+
+// ── MATERIAS ──────────────────────────────
+async function cargarMaterias() {
+  try {
+    const r = await fetch(`${API}/api/profesor/${user.id}/materias`);
+    const data = await r.json();
+    if (!data.success) return;
+    materias = data.materias || [];
+    poblarSelectorMateria();
+  } catch(e) { console.error('Materias error:', e); }
+}
+
+function poblarSelectorMateria() {
+  const select = document.getElementById('claseMateria');
+  if (!select) return;
+  // Limpiar opciones excepto la primera
+  while (select.options.length > 1) select.remove(1);
+  materias.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.codigo ? `${m.nombre} (${m.codigo})` : m.nombre;
+    select.appendChild(opt);
+  });
+  // También poblar el selector de reportes si existe
+  const selReporte = document.getElementById('reporteMateria');
+  if (selReporte) {
+    while (selReporte.options.length > 1) selReporte.remove(1);
+    materias.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.codigo ? `${m.nombre} (${m.codigo})` : m.nombre;
+      selReporte.appendChild(opt);
+    });
+  }
+}
+
+function renderMaterias() {
+  const body = document.getElementById('materiasBody');
+  const count = document.getElementById('materiasCount');
+  if (!materias.length) {
+    count.textContent = '0 materias';
+    body.innerHTML = `
+      <div style="text-align:center;padding:48px 20px;color:var(--muted)">
+        <div style="font-size:40px;margin-bottom:12px">📚</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px">Sin materias registradas</div>
+        <div style="font-size:13px">Agrega tus materias para organizarlas en el QR</div>
+      </div>`;
+    return;
+  }
+  count.textContent = `${materias.length} materia${materias.length!==1?'s':''}`;
+  body.innerHTML = materias.map(m => `
+    <div style="display:flex;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:16px;margin-right:14px;flex-shrink:0">📗</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:700">${m.nombre}</div>
+        ${m.codigo ? `<div style="font-size:12px;color:var(--accent2);font-family:var(--mono);margin-top:2px">${m.codigo}</div>` : '<div style="font-size:12px;color:var(--muted)">Sin código</div>'}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="editarMateria(${m.id})" style="padding:7px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--muted2);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent2)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted2)'">✏️ Editar</button>
+        <button onclick="eliminarMateria(${m.id})" style="padding:7px 14px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--muted2);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted2)'">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+  // Quitar borde del último
+  const items = body.querySelectorAll('[style*="border-bottom"]');
+  if (items.length) items[items.length-1].style.borderBottom = 'none';
+}
+
+function abrirModalMateria(id=null) {
+  document.getElementById('modalMateriaTitle').textContent = id ? 'Editar materia' : 'Nueva materia';
+  document.getElementById('editMateriaId').value = id || '';
+  if (id) {
+    const m = materias.find(x=>x.id===id);
+    document.getElementById('materiaNombre').value = m?.nombre || '';
+    document.getElementById('materiaCodigo').value = m?.codigo || '';
+  } else {
+    document.getElementById('materiaNombre').value = '';
+    document.getElementById('materiaCodigo').value = '';
+  }
+  const overlay = document.getElementById('modalMateriaOverlay');
+  overlay.style.display = 'flex';
+}
+
+function cerrarModalMateria() {
+  document.getElementById('modalMateriaOverlay').style.display = 'none';
+}
+
+function editarMateria(id) { abrirModalMateria(id); }
+
+async function guardarMateria() {
+  const nombre = document.getElementById('materiaNombre').value.trim();
+  const codigo = document.getElementById('materiaCodigo').value.trim();
+  const editId = document.getElementById('editMateriaId').value;
+
+  if (!nombre) { toast('El nombre es requerido', 'err'); return; }
+
+  try {
+    let r, data;
+    if (editId) {
+      // PATCH — actualizar
+      r = await fetch(`${API}/api/profesor/${user.id}/materias/${editId}`, {
+        method:'PATCH', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ nombre, codigo })
+      });
+    } else {
+      // POST — crear
+      r = await fetch(`${API}/api/profesor/${user.id}/materias`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ nombre, codigo })
+      });
+    }
+    data = await r.json();
+
+    if (data.success) {
+      cerrarModalMateria();
+      await cargarMaterias();
+      renderMaterias();
+      toast(editId ? '✅ Materia actualizada' : '✅ Materia creada', 'ok');
+    } else {
+      toast('❌ ' + data.message, 'err');
+    }
+  } catch(e) { toast('Error de conexión', 'err'); }
+}
+
+async function eliminarMateria(id) {
+  const m = materias.find(x=>x.id===id);
+  if (!confirm(`¿Eliminar la materia "${m?.nombre}"? Esta acción no se puede deshacer.`)) return;
+  try {
+    const r = await fetch(`${API}/api/profesor/${user.id}/materias/${id}`, { method:'DELETE' });
+    const data = await r.json();
+    if (data.success) {
+      await cargarMaterias();
+      renderMaterias();
+      toast('🗑️ Materia eliminada', 'info');
+    } else {
+      toast('❌ ' + data.message, 'err');
+    }
+  } catch(e) { toast('Error de conexión', 'err'); }
+}
+
+// Cerrar modal al hacer click afuera
+document.getElementById('modalMateriaOverlay').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModalMateria();
+});
+
+async function terminarClase() {
+  if (!claseActiva) return;
+  if (!confirm(`¿Terminar la clase "${claseActiva.titulo || 'actual'}"? El QR dejará de ser válido.`)) return;
+
+  showLoading('Terminando clase…');
+  try {
+    const r = await fetch(`${API}/api/clase/terminar`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ clase_id: claseActiva.id })
+    });
+    const data = await r.json();
+    hideLoading();
+
+    if (data.success) {
+      clearInterval(timerInterval);
+      claseActiva = null;
+      timerSeconds = 0;
+
+      document.getElementById('statusDot').className = 'status-dot inactive';
+      document.getElementById('statusText').textContent = 'Clase finalizada';
+      document.getElementById('timerBadge').style.display = 'none';
+      document.getElementById('btnTerminar').classList.remove('show');
+      document.getElementById('btnIniciar').classList.remove('hide');
+      document.getElementById('formIniciar').style.display = 'block';
+      document.getElementById('liveBadge').style.display = 'none';
+      document.getElementById('livePill').style.display = 'none';
+      document.getElementById('qrCanvas').innerHTML = '';
+      document.getElementById('qrPlaceholder').style.display = 'flex';
+
+      toast('⏹️ Clase terminada. QR invalidado.', 'info');
+      await cargarDashboard();
+    }
+  } catch(e) {
+    hideLoading();
+    toast('Error', 'err');
+  }
+}
+
+async function actualizarLive() {
+  if (!claseActiva) return;
+  try {
+    const r = await fetch(`${API}/api/clase/${claseActiva.id}/asistencias`);
+    const data = await r.json();
+    if (data.success) renderAsistencias(data.asistencias);
+  } catch(e) {}
+}
+
+function renderAsistencias(lista) {
+  const el = document.getElementById('asistenciaList');
+  document.getElementById('liveCount').textContent = lista.length;
+
+  if (!lista.length) {
+    el.innerHTML = `<div class="empty-live"><span style="font-size:36px">👥</span><span>Los alumnos aparecerán aquí al escanear el QR</span></div>`;
+    return;
+  }
+
+  el.innerHTML = lista.map(a => {
+    const alumno = a.alumno || {};
+    const nombre = alumno.nombre || '–';
+    const mat = alumno.matricula || '–';
+    const initials = nombre.split(' ').map(p=>p[0]||'').join('').slice(0,2).toUpperCase();
+    const hora = a.fecha_escaneo ? new Date(a.fecha_escaneo).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '–';
+    const ap = alumno.apellido_paterno || '';
+    const am = alumno.apellido_materno || '';
+    const fullName = [ap, am, nombre].filter(Boolean).join(' ') || nombre;
+    return `
+      <div class="asis-item">
+        <div class="asis-avatar">${initials}</div>
+        <div class="asis-info">
+          <div class="asis-name">${fullName}</div>
+          <div class="asis-mat">${mat}</div>
+        </div>
+        <div class="asis-time">${hora}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── REPORTES ──────────────────────────────
+async function cargarReporte() {
+  try {
+    const materiaId = document.getElementById('reporteMateria')?.value || '';
+    const qs = materiaId ? `?materia_id=${materiaId}` : '';
+    const r = await fetch(`${API}/api/profesor/${user.id}/reporte${qs}`);
+    const data = await r.json();
+    if (!data.success) return;
+    reporteData = data.reporte;
+    // Añadir nombre de materia al título del reporte si está filtrado
+    if (materiaId) {
+      const m = materias.find(x=>String(x.id)===String(materiaId));
+      reporteData._materiaNombre = m?.nombre || '';
+    } else {
+      reporteData._materiaNombre = '';
+    }
+    renderReportePreview(reporteData);
+  } catch(e) { console.error('Reporte error:', e); }
+}
+
+function renderReportePreview(r) {
+  const clases = r.clases || [];
+  const alumnos = r.alumnos || [];
+
+  document.getElementById('reporteInfo').textContent =
+    `${alumnos.length} alumnos · ${clases.length} clases`;
+
+  // Headers
+  const thead = document.getElementById('reporteHead');
+  const headCols = clases.map(c =>
+    `<th style="white-space:nowrap">${c.fecha?.slice(5) || c.id}<br><span style="font-weight:400;font-size:10px">${c.titulo?.slice(0,8)||''}</span></th>`
+  ).join('');
+  thead.innerHTML = `<tr><th>Alumno</th><th>Matrícula</th>${headCols}<th>Total</th><th>%</th></tr>`;
+
+  // Body
+  const tbody = document.getElementById('reporteBody');
+  tbody.innerHTML = alumnos.map((a, idx) => {
+    const cols = clases.map(c => {
+      const val = a.clases?.[c.id] || 'F';
+      const color = val==='P'?'var(--green)':val==='J'?'var(--yellow)':'var(--red)';
+      return `<td style="text-align:center;font-weight:700;color:${color};font-family:var(--mono)">${val}</td>`;
+    }).join('');
+    const presentes = clases.filter(c => a.clases?.[c.id] === 'P').length;
+    const pct = clases.length ? Math.round(presentes/clases.length*100) : 0;
+    const pctColor = pct>=90?'var(--green)':pct>=80?'var(--yellow)':pct>=60?'var(--orange)':'var(--red)';
+    const nombre = `${a.apellido_paterno||''} ${a.apellido_materno||''}, ${a.nombre||''}`.trim();
+    return `
+      <tr>
+        <td style="font-weight:600;white-space:nowrap">${nombre}</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--accent2)">${a.matricula}</td>
+        ${cols}
+        <td style="text-align:center;font-weight:700;color:var(--green)">${presentes}</td>
+        <td style="text-align:center;font-weight:700;color:${pctColor}">${pct}%</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function generarPDF() {
+  if (!reporteData) {
+    await cargarReporte();
+    if (!reporteData) { toast('No hay datos disponibles', 'err'); return; }
+  }
+
+  const btn = document.getElementById('btnPDF');
+  btn.classList.add('loading');
+  btn.textContent = 'Generando PDF…';
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+
+    const clases = reporteData.clases || [];
+    const alumnos = reporteData.alumnos || [];
+    const fecha = new Date().toLocaleDateString('es-MX', {year:'numeric',month:'long',day:'numeric'});
+
+    // Título
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(16);
+    const materiaNombrePDF = reporteData._materiaNombre ? ` — ${reporteData._materiaNombre}` : '';
+    doc.text(`REPORTE DE ASISTENCIAS${materiaNombrePDF}`, 14, 16);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(10);
+    doc.text(`Generado: ${fecha} · Profesor: ${user.nombre}`, 14, 23);
+    doc.text(`Total alumnos: ${alumnos.length} · Total clases: ${clases.length}`, 14, 29);
+
+    // Tabla
+    const head = [
+      ['#','Apellido Paterno','Apellido Materno','Nombre','Matrícula',
+       ...clases.map(c=>c.fecha?.slice(5)||`C${c.id}`),'Total','%']
+    ];
+
+    const body = alumnos.map((a, i) => {
+      const cols = clases.map(c => a.clases?.[c.id] || 'F');
+      const presentes = cols.filter(v=>v==='P').length;
+      const pct = clases.length ? Math.round(presentes/clases.length*100) : 0;
+      return [
+        i+1, a.apellido_paterno||'', a.apellido_materno||'', a.nombre||'',
+        a.matricula,
+        ...cols,
+        presentes, `${pct}%`
+      ];
+    });
+
+    doc.autoTable({
+      head, body,
+      startY: 34,
+      styles: { fontSize:8, cellPadding:2, halign:'center' },
+      headStyles: { fillColor:[30,45,70], textColor:255, fontStyle:'bold' },
+      columnStyles: {
+        0:{cellWidth:8},
+        1:{halign:'left',cellWidth:28},
+        2:{halign:'left',cellWidth:28},
+        3:{halign:'left',cellWidth:28},
+        4:{cellWidth:20},
+      },
+      didParseCell(data) {
+        if (data.section==='body' && data.column.index >= 5 && data.column.index < head[0].length-2) {
+          const val = data.cell.text[0];
+          if (val==='P') data.cell.styles.textColor=[34,197,94];
+          else if (val==='F') data.cell.styles.textColor=[239,68,68];
+          else if (val==='J') data.cell.styles.textColor=[234,179,8];
         }
+      },
+      alternateRowStyles:{fillColor:[20,28,46]},
+      theme:'grid',
+    });
 
-        // ===== CARGAR DATOS DEL PROFESOR =====
-        function cargarDatosProfesor() {
-            if (!usuarioActual) return;
-            
-            document.getElementById('profesorNombre').textContent = usuarioActual.nombre || 'Profesor';
-            document.getElementById('profesorEmail').textContent = usuarioActual.email || '';
-            
-            const iniciales = usuarioActual.nombre ? 
-                usuarioActual.nombre.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 
-                'P';
-            document.getElementById('profesorAvatar').textContent = iniciales;
-        }
+    doc.save(`reporte_asistencias_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast('📄 PDF generado y descargado', 'ok');
+  } catch(e) {
+    console.error(e);
+    toast('Error al generar PDF: '+e.message, 'err');
+  } finally {
+    btn.classList.remove('loading');
+    btn.innerHTML = '📄 Descargar PDF';
+  }
+}
 
-        // ===== NAVEGACIÓN =====
-        function cargarPagina(pagina) {
-            // Actualizar menú activo
-            document.querySelectorAll('.menu-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            document.getElementById(`menu-${pagina}`).classList.add('active');
-            
-            // Navegar a la página correspondiente
-            if (pagina === 'dashboard') {
-                window.location.href = '/dashboard_profesor';
-            } else if (pagina === 'asistencias') {
-                window.location.href = '/asistencias';
-            } else if (pagina === 'historial') {
-                window.location.href = '/historial';
-            } else if (pagina === 'reportes') {
-                mostrarToast('📊 Reportes en construcción', 'warning');
-            } else if (pagina === 'config') {
-                mostrarToast('⚙️ Configuración en construcción', 'warning');
-            }
-        }
+// ── ALUMNOS FULL ──────────────────────────
+function renderAlumnosFull() {
+  if (!allAlumnos.length) {
+    cargarDashboard().then(() => renderAlumnosFull());
+    return;
+  }
+  document.getElementById('alumnosTotal').textContent = `${allAlumnos.length} alumnos registrados`;
+  const tbody = document.getElementById('tbodyFull');
+  tbody.innerHTML = allAlumnos.map((a,i) => {
+    const pct = a.porcentaje || 0;
+    const color = pct>=90?'#22c55e':pct>=80?'#eab308':pct>=60?'#f97316':'#ef4444';
+    const badge = a.estado==='excelente'?'<span class="status-badge badge-green">✅ Excelente</span>'
+      :a.estado==='riesgo'?'<span class="status-badge badge-yellow">⚠️ En riesgo</span>'
+      :a.estado==='sin_ordinario'?'<span class="status-badge badge-orange">🟠 Sin ordinario</span>'
+      :'<span class="status-badge badge-red">🔴 Sin extrao.</span>';
+    return `<tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td style="font-weight:700">${a.apellido_paterno||'–'}</td>
+      <td>${a.apellido_materno||'–'}</td>
+      <td>${a.nombre||'–'}</td>
+      <td style="font-family:var(--mono);font-size:12px;color:var(--accent2)">${a.matricula}</td>
+      <td><div class="pct-bar-wrap"><div class="pct-bar"><div class="pct-fill" style="width:${pct}%;background:${color}"></div></div><span class="pct-text-sm" style="color:${color}">${pct}%</span></div></td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+}
 
-        // ===== CARGAR DASHBOARD =====
-        async function cargarDashboard() {
-            if (!usuarioActual || !usuarioActual.id) return;
-            
-            mostrarLoading(true);
-            
-            try {
-                const response = await fetch(`/api/profesor/${usuarioActual.id}/dashboard`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    actualizarSemaforo(data.dashboard.semaforo);
-                    actualizarTablaAlumnos(data.dashboard.alumnos);
-                    actualizarGraficas(data.dashboard);
-                } else {
-                    mostrarToast('Error cargando datos', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                mostrarToast('Error de conexión', 'error');
-            } finally {
-                mostrarLoading(false);
-            }
-        }
+// ── AUTH ──────────────────────────────────
+function cerrarSesion() {
+  if (confirm('¿Cerrar sesión?')) {
+    clearInterval(liveInterval);
+    clearInterval(timerInterval);
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    window.location.href = '/';
+  }
+}
 
-        // ===== ACTUALIZAR SEMÁFORO =====
-        function actualizarSemaforo(semaforo) {
-            document.getElementById('verde-count').textContent = semaforo.verde || 0;
-            document.getElementById('amarillo-count').textContent = semaforo.amarillo || 0;
-            document.getElementById('naranja-count').textContent = semaforo.naranja || 0;
-            document.getElementById('rojo-count').textContent = semaforo.rojo || 0;
-        }
+// ── UTILS ─────────────────────────────────
+function showLoading(txt='Cargando…') {
+  document.getElementById('loadingText').textContent = txt;
+  document.getElementById('loading').classList.add('active');
+}
+function hideLoading() { document.getElementById('loading').classList.remove('active'); }
 
-        // ===== ACTUALIZAR TABLA =====
-        function actualizarTablaAlumnos(alumnos) {
-            const tbody = document.getElementById('alumnosBody');
-            
-            if (!alumnos || alumnos.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 40px;">
-                            <i class="fas fa-users" style="font-size: 3rem; color: var(--gray);"></i>
-                            <p>No hay alumnos registrados</p>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            tbody.innerHTML = '';
-            
-            alumnos.sort((a, b) => b.porcentaje - a.porcentaje).forEach(alumno => {
-                const tr = document.createElement('tr');
-                tr.className = 'alumno-row';
-                
-                let badgeClass = 'badge-verde';
-                let estadoTexto = 'Excelente';
-                
-                if (alumno.porcentaje < 80) {
-                    badgeClass = 'badge-amarillo';
-                    estadoTexto = 'En Riesgo';
-                }
-                if (alumno.porcentaje < 50) {
-                    badgeClass = 'badge-naranja';
-                    estadoTexto = 'Sin Ordinario';
-                }
-                if (alumno.porcentaje < 30) {
-                    badgeClass = 'badge-rojo';
-                    estadoTexto = 'Sin Extra';
-                }
-                
-                tr.innerHTML = `
-                    <td>${alumno.matricula}</td>
-                    <td><strong>${alumno.nombre}</strong></td>
-                    <td>${alumno.asistencias}</td>
-                    <td>${alumno.faltas || 0}</td>
-                    <td>${alumno.porcentaje}%</td>
-                    <td><span class="badge ${badgeClass}">${estadoTexto}</span></td>
-                `;
-                
-                tbody.appendChild(tr);
-            });
-        }
+function toast(msg, type='info') {
+  const wrap = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
 
-        // ===== ACTUALIZAR GRÁFICAS =====
-        function actualizarGraficas(dashboard) {
-            const ctx1 = document.getElementById('graficoAsistencia').getContext('2d');
-            const ctx2 = document.getElementById('graficoTop').getContext('2d');
-            
-            if (chartAsistencia) chartAsistencia.destroy();
-            if (chartTop) chartTop.destroy();
-            
-            chartAsistencia = new Chart(ctx1, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Excelente (>80%)', 'En Riesgo (50-80%)', 'Sin Ordinario (30-50%)', 'Sin Extra (<30%)'],
-                    datasets: [{
-                        data: [
-                            dashboard.semaforo.verde,
-                            dashboard.semaforo.amarillo,
-                            dashboard.semaforo.naranja,
-                            dashboard.semaforo.rojo
-                        ],
-                        backgroundColor: ['#06d6a0', '#ffd166', '#fb8b24', '#ef476f'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } }
-                }
-            });
-            
-            const top5 = dashboard.alumnos
-                .sort((a, b) => b.porcentaje - a.porcentaje)
-                .slice(0, 5);
-            
-            chartTop = new Chart(ctx2, {
-                type: 'bar',
-                data: {
-                    labels: top5.map(a => a.nombre.split(' ')[0]),
-                    datasets: [{
-                        label: 'Porcentaje',
-                        data: top5.map(a => a.porcentaje),
-                        backgroundColor: '#4361ee',
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true, max: 100 } }
-                }
-            });
-        }
-
-        // ===== CLASE ACTIVA =====
-        async function verificarClaseActiva() {
-            try {
-                const response = await fetch('/api/clase/activa');
-                const data = await response.json();
-                
-                if (data.activa) {
-                    claseActiva = data.clase;
-                    mostrarClaseActiva();
-                } else {
-                    mostrarClaseInactiva();
-                }
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        }
-
-        function mostrarClaseActiva() {
-            document.getElementById('claseTitulo').innerHTML = '<i class="fas fa-circle" style="color: #06d6a0;"></i> Clase Activa';
-            document.getElementById('claseDetalles').style.display = 'flex';
-            document.getElementById('btnIniciarClase').style.display = 'none';
-            document.getElementById('btnTerminarClase').style.display = 'inline-block';
-            document.getElementById('btnVerQR').style.display = 'inline-block';
-            
-            if (claseActiva) {
-                document.getElementById('claseFecha').textContent = new Date(claseActiva.fecha).toLocaleDateString();
-                document.getElementById('claseHora').textContent = claseActiva.hora_inicio;
-            }
-        }
-
-        function mostrarClaseInactiva() {
-            document.getElementById('claseTitulo').innerHTML = '<i class="fas fa-circle" style="color: var(--gray);"></i> No hay clase activa';
-            document.getElementById('claseDetalles').style.display = 'none';
-            document.getElementById('btnIniciarClase').style.display = 'inline-block';
-            document.getElementById('btnTerminarClase').style.display = 'none';
-            document.getElementById('btnVerQR').style.display = 'none';
-        }
-
-        async function iniciarClase() {
-            mostrarLoading(true);
-            
-            navigator.geolocation.getCurrentPosition(async (position) => {
-                try {
-                    const response = await fetch('/api/clase/iniciar', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            profesor_id: usuarioActual.id,
-                            latitud: position.coords.latitude,
-                            longitud: position.coords.longitude
-                        })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        claseActiva = data.clase;
-                        mostrarClaseActiva();
-                        mostrarToast('✅ Clase iniciada', 'success');
-                    } else {
-                        mostrarToast('❌ ' + data.message, 'error');
-                    }
-                } catch (error) {
-                    mostrarToast('❌ Error al iniciar clase', 'error');
-                } finally {
-                    mostrarLoading(false);
-                }
-            }, (error) => {
-                mostrarToast('❌ Error obteniendo ubicación', 'error');
-                mostrarLoading(false);
-            });
-        }
-
-        async function terminarClase() {
-            if (!confirm('¿Terminar la clase?')) return;
-            
-            mostrarLoading(true);
-            
-            try {
-                const response = await fetch('/api/clase/terminar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ clase_id: claseActiva.id })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    claseActiva = null;
-                    mostrarClaseInactiva();
-                    mostrarToast('✅ Clase terminada', 'success');
-                } else {
-                    mostrarToast('❌ ' + data.message, 'error');
-                }
-            } catch (error) {
-                mostrarToast('❌ Error al terminar clase', 'error');
-            } finally {
-                mostrarLoading(false);
-            }
-        }
-
-        function verQR() {
-            if (!claseActiva) {
-                mostrarToast('No hay clase activa', 'error');
-                return;
-            }
-            
-            const qrData = {
-                clase_id: claseActiva.id,
-                profesor_id: usuarioActual.id,
-                timestamp: new Date().toISOString()
-            };
-            
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(JSON.stringify(qrData))}`;
-            
-            // Abrir modal con QR
-            const modalHtml = `
-                <div class="modal" id="qrModal" style="display: flex;">
-                    <div class="modal-content" style="max-width: 400px;">
-                        <div class="modal-header">
-                            <h2><i class="fas fa-qrcode"></i> QR de Clase</h2>
-                            <button class="modal-close" onclick="cerrarQRModal()">&times;</button>
-                        </div>
-                        <div class="modal-body" style="text-align: center;">
-                            <img src="${qrUrl}" style="width: 250px; height: 250px; margin: 20px 0;">
-                            <p>Escanea para registrar asistencia</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            const modalContainer = document.createElement('div');
-            modalContainer.innerHTML = modalHtml;
-            document.body.appendChild(modalContainer);
-        }
-
-        function cerrarQRModal() {
-            const modal = document.getElementById('qrModal');
-            if (modal) modal.remove();
-        }
-
-        // ===== FILTRO DE ALUMNOS =====
-        function filtrarAlumnos() {
-            const texto = document.getElementById('buscarAlumno').value.toLowerCase();
-            const filas = document.querySelectorAll('#alumnosBody tr');
-            
-            filas.forEach(fila => {
-                const textoFila = fila.textContent.toLowerCase();
-                fila.style.display = textoFila.includes(texto) ? '' : 'none';
-            });
-        }
-
-        // ===== UTILERÍAS =====
-        function mostrarLoading(mostrar) {
-            document.getElementById('loadingOverlay').classList.toggle('active', mostrar);
-        }
-
-        function mostrarToast(mensaje, tipo = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${tipo}`;
-            
-            toast.innerHTML = `
-                <i class="fas ${tipo === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-                <span style="flex: 1;">${mensaje}</span>
-                <button onclick="this.parentElement.remove()" style="background: none; border: none; cursor: pointer;">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            
-            container.appendChild(toast);
-            
-            setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.remove();
-                }
-            }, 3000);
-        }
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
-        }
-
-        function cerrarSesion() {
-            if (confirm('¿Cerrar sesión?')) {
-                localStorage.clear();
-                window.location.href = '/';
-            }
-        }
-
-        window.addEventListener('beforeunload', function() {
-            if (intervaloActualizacion) {
-                clearInterval(intervaloActualizacion);
-            }
-        });
-    </script>
+// Mobile sidebar
+document.addEventListener('click', e => {
+  const sidebar = document.getElementById('sidebar');
+  if (window.innerWidth <= 768 && sidebar.classList.contains('open') &&
+      !sidebar.contains(e.target) && !e.target.closest('.mobile-menu-btn')) {
+    sidebar.classList.remove('open');
+  }
+});
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 768) document.getElementById('sidebar').classList.remove('open');
+});
+</script>
 </body>
 </html>

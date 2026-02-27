@@ -1,1526 +1,873 @@
-<!-- templates/dashboard_alumno.html - VERSIÓN PRODUCCIÓN CON CONFIRMACIÓN -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mi Asistencia · Alumno</title>
-    
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <style>
-        /* ===== RESET & VARIABLES ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        :root {
-            --primary: #5b50f5;
-            --primary-dark: #4a40e0;
-            --success: #00c896;
-            --warning: #ffb830;
-            --danger: #ff4757;
-            --dark: #1a1a2e;
-            --gray: #8892a4;
-            --light: #f0f2f8;
-            --white: #ffffff;
-
-            --gradient-primary: linear-gradient(135deg, #5b50f5, #8b5cf6);
-            --gradient-success: linear-gradient(135deg, #00c896, #00a878);
-            --gradient-warning: linear-gradient(135deg, #ffb830, #ff8c00);
-            --gradient-danger: linear-gradient(135deg, #ff4757, #c0392b);
-            --gradient-bg: linear-gradient(160deg, #667eea 0%, #764ba2 100%);
-
-            --shadow-sm: 0 2px 8px rgba(91,80,245,0.10);
-            --shadow-md: 0 4px 16px rgba(91,80,245,0.15);
-            --shadow-lg: 0 8px 32px rgba(91,80,245,0.18);
-            --shadow-card: 0 2px 16px rgba(0,0,0,0.07);
-
-            --radius-sm: 12px;
-            --radius-md: 16px;
-            --radius-lg: 22px;
-            --radius-xl: 28px;
-        }
-
-        html { height: 100%; }
-
-        body {
-            font-family: -apple-system, 'SF Pro Display', 'Segoe UI', sans-serif;
-            background: var(--gradient-bg);
-            min-height: 100vh;
-            padding: 0;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* ===== ANIMACIONES ===== */
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) scale(1); }
-            50% { transform: translateY(-14px) scale(1.02); }
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(28px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes sheetUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-
-        @keyframes popIn {
-            from { opacity: 0; transform: scale(0.85); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(91,80,245,0.4); }
-            50% { box-shadow: 0 0 0 10px rgba(91,80,245,0); }
-        }
-
-        /* ===== BACKGROUND ===== */
-        .bg-decoration {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        .bg-circle {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.08);
-        }
-
-        .circle1 {
-            width: 380px; height: 380px;
-            top: -120px; right: -80px;
-            animation: float 9s ease-in-out infinite;
-        }
-
-        .circle2 {
-            width: 280px; height: 280px;
-            bottom: -60px; left: -60px;
-            animation: float 7s ease-in-out infinite reverse;
-        }
-
-        /* ===== SCROLL WRAPPER ===== */
-        .dashboard-container {
-            max-width: 430px;
-            margin: 0 auto;
-            padding: 0 16px 100px;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* ===== HEADER ===== */
-        .header-card {
-            padding: 56px 0 20px;
-            margin-bottom: 0;
-            animation: slideUp 0.4s ease;
-        }
-
-        .welcome-section {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 14px;
-        }
-
-        .avatar {
-            width: 52px;
-            height: 52px;
-            background: var(--gradient-primary);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: 800;
-            color: white;
-            box-shadow: var(--shadow-md);
-            flex-shrink: 0;
-            letter-spacing: -0.5px;
-        }
-
-        .welcome-text h1 {
-            font-size: 22px;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            letter-spacing: -0.3px;
-        }
-
-        .welcome-text p {
-            font-size: 13px;
-            color: rgba(255,255,255,0.65);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .welcome-text p i { font-size: 11px; }
-
-        .badge-device {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(255,255,255,0.14);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: rgba(255,255,255,0.9);
-            padding: 7px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            backdrop-filter: blur(8px);
-        }
-
-        .badge-device i { font-size: 10px; color: #7bffda; }
-
-        /* ===== STATS GRID ===== */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin: 20px 0 14px;
-            animation: slideUp 0.45s ease;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: var(--radius-md);
-            padding: 16px 10px 14px;
-            text-align: center;
-            box-shadow: var(--shadow-card);
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.18s ease, box-shadow 0.18s ease;
-        }
-
-        .stat-card:active { transform: scale(0.96); }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: var(--gradient-primary);
-            border-radius: 99px 99px 0 0;
-        }
-
-        .stat-card.present::before { background: var(--gradient-success); }
-        .stat-card.absent::before { background: var(--gradient-danger); }
-        .stat-card.percentage::before { background: var(--gradient-warning); }
-
-        .stat-icon {
-            width: 34px; height: 34px;
-            margin: 0 auto 8px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            background: rgba(91,80,245,0.08);
-            color: var(--primary);
-        }
-
-        .stat-card.present .stat-icon { background: rgba(0,200,150,0.1); color: var(--success); }
-        .stat-card.absent .stat-icon { background: rgba(255,71,87,0.1); color: var(--danger); }
-        .stat-card.percentage .stat-icon { background: rgba(255,184,48,0.1); color: var(--warning); }
-
-        .stat-value {
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--dark);
-            letter-spacing: -0.5px;
-            line-height: 1;
-            margin-bottom: 4px;
-        }
-
-        .stat-label {
-            font-size: 10px;
-            color: var(--gray);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-        }
-
-        /* ===== ACTION BUTTONS ===== */
-        .action-buttons {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 10px;
-            margin-bottom: 16px;
-            animation: slideUp 0.5s ease;
-        }
-
-        .action-btn {
-            background: white;
-            border: none;
-            border-radius: var(--radius-md);
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.18s ease;
-            box-shadow: var(--shadow-card);
-            color: var(--dark);
-            white-space: nowrap;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        .action-btn i { font-size: 18px; }
-
-        .action-btn.primary {
-            background: var(--gradient-primary);
-            color: white;
-            box-shadow: var(--shadow-md);
-            animation: pulse 2.5s infinite;
-        }
-
-        .action-btn.primary:active {
-            transform: scale(0.96);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .action-btn:active {
-            transform: scale(0.95);
-            box-shadow: none;
-        }
-
-        /* Botón cerrar sesión — solo icono */
-        .action-btn.logout-btn {
-            padding: 16px 18px;
-            min-width: 0;
-            width: 54px;
-            height: 54px;
-            border-radius: var(--radius-md);
-        }
-
-        .action-btn.logout-btn span { display: none; }
-
-        /* ===== ACTIVITY SECTION ===== */
-        .activity-section {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: 20px 18px;
-            box-shadow: var(--shadow-card);
-            animation: slideUp 0.55s ease;
-        }
-
-        .section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
-
-        .section-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--dark);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .section-title i { color: var(--primary); font-size: 14px; }
-
-        .refresh-btn {
-            width: 34px; height: 34px;
-            background: var(--light);
-            border: none;
-            border-radius: 10px;
-            color: var(--primary);
-            cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-        .refresh-btn:active { transform: rotate(90deg); background: rgba(91,80,245,0.1); }
-
-        .activity-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .activity-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 14px;
-            background: var(--light);
-            border-radius: var(--radius-sm);
-            transition: transform 0.15s ease;
-        }
-
-        .activity-item:active { transform: scale(0.98); }
-
-        .activity-icon {
-            width: 38px; height: 38px;
-            border-radius: 11px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 15px;
-            flex-shrink: 0;
-        }
-
-        .activity-icon.present {
-            background: rgba(0,200,150,0.12);
-            color: var(--success);
-        }
-
-        .activity-icon.absent {
-            background: rgba(255,71,87,0.1);
-            color: var(--danger);
-        }
-
-        .activity-info { flex: 1; min-width: 0; }
-
-        .activity-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--dark);
-            margin-bottom: 2px;
-        }
-
-        .activity-meta {
-            font-size: 12px;
-            color: var(--gray);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 36px 20px;
-            color: var(--gray);
-        }
-
-        .empty-state i { font-size: 40px; margin-bottom: 10px; opacity: 0.25; display: block; }
-        .empty-state p { font-size: 13px; }
-
-        /* ===== MODALS — bottom sheets ===== */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 1000;
-            background: rgba(10,10,30,0.6);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            align-items: flex-end;
-            justify-content: center;
-            animation: fadeIn 0.2s ease;
-        }
-
-        .modal.active { display: flex; }
-
-        .modal-content {
-            background: white;
-            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-            padding: 10px 20px 40px;
-            width: 100%;
-            max-width: 430px;
-            max-height: 92vh;
-            overflow-y: auto;
-            animation: sheetUp 0.3s cubic-bezier(.4,0,.2,1);
-        }
-
-        /* handle */
-        .modal-content::before {
-            content: '';
-            display: block;
-            width: 36px; height: 4px;
-            background: #dde0e8;
-            border-radius: 99px;
-            margin: 10px auto 20px;
-        }
-
-        .modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .modal-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--dark);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .close-btn {
-            width: 34px; height: 34px;
-            background: var(--light);
-            border: none;
-            border-radius: 50%;
-            color: var(--gray);
-            font-size: 18px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-        }
-
-        .close-btn:active { background: #e0e4ef; }
-
-        /* ===== SCANNER ===== */
-        #reader {
-            width: 100%;
-            border-radius: var(--radius-md);
-            overflow: hidden;
-        }
-
-        .camera-error {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--danger);
-        }
-
-        .camera-error i { font-size: 44px; margin-bottom: 14px; display: block; }
-
-        /* ===== CONFIRMATION ===== */
-        .confirmation-icon {
-            width: 72px; height: 72px;
-            margin: 0 auto 16px;
-            background: rgba(91,80,245,0.08);
-            border-radius: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 34px;
-            color: var(--primary);
-        }
-
-        .class-info-card {
-            background: var(--light);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            margin: 16px 0;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 13px 16px;
-            border-bottom: 1px solid rgba(0,0,0,0.04);
-        }
-
-        .info-row:last-child { border-bottom: none; }
-
-        .info-label {
-            color: var(--gray);
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .info-value {
-            font-weight: 600;
-            color: var(--dark);
-            font-size: 13px;
-            text-align: right;
-            max-width: 58%;
-        }
-
-        .checkbox-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 14px 0;
-            padding: 14px 16px;
-            background: var(--light);
-            border-radius: var(--radius-md);
-        }
-
-        .checkbox-wrapper input[type="checkbox"] {
-            width: 20px; height: 20px;
-            accent-color: var(--primary);
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        .checkbox-wrapper label {
-            font-size: 14px;
-            color: var(--dark);
-            cursor: pointer;
-            line-height: 1.4;
-        }
-
-        .modal-footer {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 16px;
-        }
-
-        .modal-footer .btn {
-            padding: 15px;
-            border: none;
-            border-radius: var(--radius-md);
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.15s ease;
-        }
-
-        .modal-footer .btn:active { transform: scale(0.96); }
-
-        .btn-secondary {
-            background: var(--light);
-            color: var(--gray);
-        }
-
-        .btn-success {
-            background: var(--gradient-success);
-            color: white;
-            box-shadow: 0 4px 12px rgba(0,200,150,0.3);
-        }
-
-        .btn-primary {
-            background: var(--gradient-primary);
-            color: white;
-            box-shadow: var(--shadow-md);
-        }
-
-        /* ===== SUCCESS MODAL ===== */
-        .success-modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 3000;
-            background: rgba(10,10,30,0.7);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.25s ease;
-        }
-
-        .success-modal.active { display: flex; }
-
-        .success-content {
-            background: white;
-            border-radius: var(--radius-xl);
-            padding: 36px 24px 28px;
-            text-align: center;
-            width: calc(100% - 32px);
-            max-width: 360px;
-            animation: popIn 0.4s cubic-bezier(.34,1.56,.64,1);
-            box-shadow: 0 24px 64px rgba(0,0,0,0.2);
-        }
-
-        .success-icon {
-            width: 84px; height: 84px;
-            margin: 0 auto 20px;
-            background: var(--gradient-success);
-            border-radius: 26px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 38px;
-            color: white;
-            box-shadow: 0 8px 24px rgba(0,200,150,0.35);
-        }
-
-        .success-title {
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--dark);
-            margin-bottom: 6px;
-            letter-spacing: -0.3px;
-        }
-
-        .success-message {
-            font-size: 14px;
-            color: var(--gray);
-            margin-bottom: 20px;
-            line-height: 1.5;
-        }
-
-        .success-details {
-            background: var(--light);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .success-detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 16px;
-            border-bottom: 1px solid rgba(0,0,0,0.04);
-        }
-
-        .success-detail-row:last-child { border-bottom: none; }
-
-        .success-detail-label {
-            font-size: 13px;
-            color: var(--gray);
-        }
-
-        .success-detail-value {
-            font-size: 13px;
-            color: var(--dark);
-            font-weight: 600;
-        }
-
-        /* ===== LOADING ===== */
-        .loading-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(10,10,30,0.65);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .loading-overlay.active { display: flex; }
-
-        .loading-content { text-align: center; color: white; }
-
-        .spinner {
-            width: 48px; height: 48px;
-            border: 3px solid rgba(255,255,255,0.25);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 14px;
-        }
-
-        .loading-content p { font-size: 14px; opacity: 0.8; font-weight: 500; }
-
-        /* ===== TOASTS ===== */
-        .toast-container {
-            position: fixed;
-            top: 56px;
-            left: 16px; right: 16px;
-            z-index: 3000;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-width: 430px;
-            margin: 0 auto;
-        }
-
-        .toast {
-            background: white;
-            border-radius: var(--radius-md);
-            padding: 14px 16px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            animation: slideUp 0.3s cubic-bezier(.34,1.56,.64,1);
-        }
-
-        .toast.success { border-left: 3px solid var(--success); }
-        .toast.error { border-left: 3px solid var(--danger); }
-        .toast.info { border-left: 3px solid var(--primary); }
-
-        .toast i { font-size: 18px; flex-shrink: 0; }
-        .toast.success i { color: var(--success); }
-        .toast.error i { color: var(--danger); }
-        .toast.info i { color: var(--primary); }
-
-        .toast span {
-            flex: 1;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--dark);
-            line-height: 1.4;
-        }
-
-        .toast button {
-            background: none; border: none;
-            color: var(--gray);
-            font-size: 18px;
-            cursor: pointer;
-            padding: 0;
-            width: 22px; height: 22px;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AttendCore — Alumno</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- QR Scanner lib -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#080c14;--surface:#0e1420;--surface2:#141c2e;--surface3:#1a2236;
+  --border:#1e2d45;--border2:#243347;
+  --accent:#3b82f6;--accent2:#60a5fa;--accent-glow:rgba(59,130,246,.3);
+  --green:#22c55e;--red:#ef4444;--yellow:#eab308;--orange:#f97316;
+  --text:#e2e8f0;--muted:#64748b;--muted2:#94a3b8;
+  --radius:14px;--font:'Space Grotesk',sans-serif;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+
+/* ── BACKGROUND ── */
+.bg-fx{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse at 80% 10%,rgba(59,130,246,.07) 0%,transparent 55%),
+             radial-gradient(ellipse at 10% 80%,rgba(34,197,94,.05) 0%,transparent 50%)}
+
+/* ── TOP BAR ── */
+.top-bar{
+  position:relative;z-index:10;
+  padding:52px 20px 0;
+  flex-shrink:0;
+}
+.profile-row{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.avatar{
+  width:50px;height:50px;border-radius:15px;
+  background:linear-gradient(135deg,#1d4ed8,#3b82f6);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:700;flex-shrink:0;
+  box-shadow:0 0 18px rgba(59,130,246,.4);
+}
+.profile-info{flex:1;min-width:0}
+.profile-name{font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-mat{font-size:12px;color:var(--accent2);font-weight:600;letter-spacing:.3px}
+.profile-date{font-size:11px;color:var(--muted2);margin-top:1px}
+.btn-horario{
+  padding:8px 14px;background:var(--surface2);border:1px solid var(--border2);
+  border-radius:10px;color:var(--accent2);font-family:var(--font);font-size:12px;font-weight:700;
+  cursor:pointer;white-space:nowrap;transition:all .2s;
+  display:flex;align-items:center;gap:5px;
+}
+.btn-horario:hover{border-color:var(--accent);background:rgba(59,130,246,.1)}
+
+/* ── TABS ── */
+.tabs-row{
+  display:flex;
+  border-bottom:1px solid var(--border);
+  position:relative;z-index:10;
+  flex-shrink:0;
+  padding:0 20px;
+  gap:4px;
+}
+.tab-btn{
+  padding:10px 16px;background:none;border:none;
+  color:var(--muted);font-family:var(--font);font-size:14px;font-weight:600;
+  cursor:pointer;border-bottom:2px solid transparent;
+  margin-bottom:-1px;transition:all .2s;
+}
+.tab-btn.active{color:var(--accent2);border-bottom-color:var(--accent)}
+
+/* ── SCROLL AREA ── */
+.scroll-area{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  position:relative;z-index:1;
+  -webkit-overflow-scrolling:touch;
+  scroll-behavior:smooth;
+}
+.scroll-area::-webkit-scrollbar{display:none}
+
+/* ── PANELS ── */
+.panel{display:none;padding:20px 20px 120px;animation:fadeIn .3s ease both}
+.panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 10px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.stat-card::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  border-radius:3px 3px 0 0;
+}
+.stat-card.green::after{background:var(--green)}
+.stat-card.red::after{background:var(--red)}
+.stat-card.yellow::after{background:var(--yellow)}
+.stat-card.blue::after{background:var(--accent)}
+.stat-num{font-size:26px;font-weight:700;margin-bottom:2px}
+.stat-card.green .stat-num{color:var(--green)}
+.stat-card.red .stat-num{color:var(--red)}
+.stat-card.yellow .stat-num{color:var(--yellow)}
+.stat-card.blue .stat-num{color:var(--accent2)}
+.stat-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+
+/* PORCENTAJE BAR */
+.pct-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px;margin-bottom:20px;
+  display:flex;align-items:center;gap:16px;
+}
+.pct-circle{position:relative;width:70px;height:70px;flex-shrink:0}
+.pct-circle svg{transform:rotate(-90deg)}
+.pct-circle .track{fill:none;stroke:var(--border2);stroke-width:6}
+.pct-circle .fill{fill:none;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .8s ease}
+.pct-text{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.pct-num{font-size:17px;font-weight:700}
+.pct-small{font-size:9px;color:var(--muted);font-weight:600}
+.pct-info{flex:1}
+.pct-info h3{font-size:16px;font-weight:700;margin-bottom:3px}
+.pct-info p{font-size:13px;color:var(--muted2)}
+
+/* SCAN BTN */
+.scan-section{margin-bottom:20px}
+.btn-scan{
+  width:100%;padding:18px;
+  background:linear-gradient(135deg,#1d4ed8,#3b82f6);
+  border:none;border-radius:16px;
+  color:#fff;font-family:var(--font);font-size:17px;font-weight:700;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 6px 25px rgba(59,130,246,.35);
+  transition:transform .15s,box-shadow .2s;
+  position:relative;overflow:hidden;
+}
+.btn-scan::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.1),transparent);
+}
+.btn-scan:active{transform:scale(.98)}
+.scan-icon{font-size:22px;animation:scanPulse 2s ease-in-out infinite}
+@keyframes scanPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+
+.btn-logout-sec{
+  width:100%;padding:14px;
+  background:transparent;border:1px solid var(--border2);
+  border-radius:var(--radius);color:var(--muted2);
+  font-family:var(--font);font-size:14px;font-weight:600;
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-bottom:20px;
+}
+.btn-logout-sec:hover{border-color:var(--red);color:var(--red)}
+
+/* ACTIVIDAD */
+.section-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.activity-list{display:flex;flex-direction:column;gap:10px}
+.activity-item{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+}
+.activity-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+.activity-dot.ok{background:var(--green);box-shadow:0 0 6px var(--green)}
+.activity-dot.miss{background:var(--red)}
+.activity-dot.just{background:var(--yellow)}
+.activity-info{flex:1;min-width:0}
+.activity-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.activity-sub{font-size:12px;color:var(--muted2);margin-top:2px}
+.activity-badge{
+  font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;white-space:nowrap;
+}
+.activity-badge.ok{background:rgba(34,197,94,.12);color:var(--green)}
+.activity-badge.miss{background:rgba(239,68,68,.12);color:var(--red)}
+.activity-badge.just{background:rgba(234,179,8,.12);color:var(--yellow)}
+.empty-state{
+  text-align:center;padding:40px 20px;color:var(--muted);
+}
+.empty-state .emoji{font-size:40px;margin-bottom:12px}
+
+/* HORARIO */
+.horario-grid{display:flex;flex-direction:column;gap:10px}
+.horario-day{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+}
+.horario-day-header{
+  padding:10px 16px;
+  background:var(--surface2);border-bottom:1px solid var(--border);
+  font-size:12px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.5px;
+  display:flex;align-items:center;gap:6px;
+}
+.horario-day-header.today{background:rgba(59,130,246,.12);color:var(--accent2)}
+.horario-clase{
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  display:flex;gap:12px;align-items:center;
+}
+.horario-clase:last-child{border-bottom:none}
+.horario-time{
+  font-size:12px;font-weight:700;color:var(--accent2);
+  white-space:nowrap;min-width:80px;
+  font-family:'JetBrains Mono','Courier New',monospace;
+}
+.horario-nombre{font-size:14px;font-weight:600}
+.horario-aula{font-size:12px;color:var(--muted2);margin-top:2px}
+.today-badge{
+  font-size:10px;font-weight:700;padding:2px 8px;
+  background:rgba(59,130,246,.2);color:var(--accent2);
+  border-radius:5px;margin-left:auto;
+}
+
+/* ── BOTTOM NAV (stub) ── */
+.bottom-safe{height:calc(20px + var(--safe-bottom))}
+
+/* ── MODALS ── */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.8);
+  z-index:100;display:none;align-items:flex-end;
+  backdrop-filter:blur(6px);
+}
+.overlay.active{display:flex;animation:fadeIn .2s ease}
+
+.sheet{
+  width:100%;max-width:480px;margin:0 auto;
+  background:var(--surface);border-radius:24px 24px 0 0;
+  border:1px solid var(--border);border-bottom:none;
+  padding:12px 20px 40px;
+  animation:sheetUp .35s cubic-bezier(.22,1,.36,1);
+}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+.sheet-handle{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 20px}
+.sheet-title{font-size:18px;font-weight:700;margin-bottom:6px;text-align:center}
+.sheet-sub{font-size:13px;color:var(--muted2);text-align:center;margin-bottom:20px}
+
+/* SCANNER */
+#qrReader{
+  width:100%;border-radius:16px;overflow:hidden;
+  border:2px solid var(--border);margin-bottom:16px;background:#000;
+}
+.scan-corners{
+  position:relative;height:240px;display:flex;align-items:center;justify-content:center;
+}
+.scan-line{
+  position:absolute;width:80%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  animation:scanLine 2s ease-in-out infinite;
+}
+@keyframes scanLine{0%,100%{top:30%;opacity:.5}50%{top:70%;opacity:1}}
+
+.btn-scan-cancel{
+  width:100%;padding:14px;background:transparent;border:1px solid var(--border2);
+  border-radius:var(--radius);color:var(--muted2);
+  font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;
+  transition:all .2s;
+}
+.btn-scan-cancel:hover{border-color:var(--red);color:var(--red)}
+
+/* CONFIRM MODAL */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.8);
+  z-index:200;display:none;align-items:center;justify-content:center;padding:20px;
+  backdrop-filter:blur(8px);
+}
+.modal-overlay.active{display:flex;animation:fadeIn .2s ease}
+.modal-card{
+  width:100%;max-width:360px;
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:20px;padding:28px 24px;
+  animation:popIn .4s cubic-bezier(.22,1,.36,1);
+}
+@keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+.modal-icon{font-size:44px;text-align:center;margin-bottom:14px}
+.modal-title{font-size:18px;font-weight:700;text-align:center;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--muted2);text-align:center;margin-bottom:20px}
+.confirm-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.confirm-row{
+  display:flex;justify-content:space-between;
+  background:var(--surface2);border-radius:10px;padding:10px 14px;font-size:13px;
+}
+.confirm-row .label{color:var(--muted2);font-weight:600}
+.confirm-row .val{font-weight:700}
+.geo-warning{
+  background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.2);
+  border-radius:10px;padding:10px 14px;
+  font-size:12px;color:#fde68a;margin-bottom:16px;
+  display:flex;gap:8px;align-items:flex-start;
+}
+.modal-btns{display:flex;gap:10px}
+.modal-btn{
+  flex:1;padding:13px;border:none;border-radius:var(--radius);
+  font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;
+  transition:all .15s;
+}
+.modal-btn.cancel{background:var(--surface2);border:1px solid var(--border2);color:var(--muted2)}
+.modal-btn.confirm{background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;box-shadow:0 4px 14px rgba(59,130,246,.3)}
+.modal-btn.confirm:hover{transform:translateY(-1px)}
+
+/* SUCCESS MODAL */
+.success-check{
+  width:64px;height:64px;border-radius:50%;
+  background:rgba(34,197,94,.15);border:2px solid var(--green);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;margin:0 auto 16px;
+  animation:successPop .5s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes successPop{from{transform:scale(0)}to{transform:scale(1)}}
+
+/* TOAST */
+.toast-wrap{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  z-index:999;display:flex;flex-direction:column;gap:8px;
+  max-width:340px;width:calc(100% - 32px);
+}
+.toast{
+  background:var(--surface);border-radius:12px;padding:13px 16px;
+  display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+  border:1px solid var(--border2);
+  animation:toastIn .3s cubic-bezier(.22,1,.36,1);
+}
+@keyframes toastIn{from{opacity:0;transform:translateY(-10px) scale(.95)}to{opacity:1;transform:none}}
+.toast.ok{border-color:rgba(34,197,94,.3);color:var(--green)}
+.toast.err{border-color:rgba(239,68,68,.3);color:var(--red)}
+.toast.info{border-color:rgba(59,130,246,.3);color:var(--accent2)}
+
+/* LOADING */
+.loading-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;
+  backdrop-filter:blur(4px);
+}
+.loading-overlay.active{display:flex}
+.loading-spinner{
+  width:48px;height:48px;border:3px solid rgba(59,130,246,.2);
+  border-top-color:var(--accent);border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:14px;font-weight:600;color:var(--muted2)}
+</style>
 </head>
 <body>
-    <!-- Background Decoration -->
-    <div class="bg-decoration">
-        <div class="bg-circle circle1"></div>
-        <div class="bg-circle circle2"></div>
+<div class="bg-fx"></div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toasts"></div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">Cargando…</div>
+</div>
+
+<!-- ── TOP BAR ── -->
+<div class="top-bar">
+  <div class="profile-row">
+    <div class="avatar" id="avatarEl">?</div>
+    <div class="profile-info">
+      <div class="profile-name" id="profileName">Cargando…</div>
+      <div class="profile-mat" id="profileMat">––</div>
+      <div class="profile-date" id="profileDate">––</div>
+    </div>
+    <button class="btn-horario" onclick="setTab('horario')">📅 Horario</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-row">
+  <button class="tab-btn active" onclick="setTab('inicio')" id="tabInicio">🏠 Inicio</button>
+  <button class="tab-btn" onclick="setTab('actividad')" id="tabActividad">📋 Actividad</button>
+  <button class="tab-btn" onclick="setTab('horario')" id="tabHorario">📅 Horario</button>
+</div>
+
+<!-- SCROLL -->
+<div class="scroll-area">
+
+  <!-- ── PANEL INICIO ── -->
+  <div class="panel active" id="panelInicio">
+
+    <!-- ESTADÍSTICAS -->
+    <div class="stats-grid">
+      <div class="stat-card green">
+        <div class="stat-num" id="statPresentes">–</div>
+        <div class="stat-label">Asistencias</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-num" id="statFaltas">–</div>
+        <div class="stat-label">Faltas</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-num" id="statJust">–</div>
+        <div class="stat-label">Justific.</div>
+      </div>
     </div>
 
-    <!-- Main Container -->
-    <div class="dashboard-container">
-        <!-- Header Card -->
-        <div class="header-card" style="background:transparent;box-shadow:none;backdrop-filter:none;">
-            <div class="welcome-section">
-                <div class="avatar" id="userAvatar">👤</div>
-                <div class="welcome-text">
-                    <h1 id="userName">Cargando...</h1>
-                    <p>
-                        <i class="fas fa-calendar-alt"></i>
-                        <span id="currentDate">--</span>
-                    </p>
-                </div>
-            </div>
-            <div class="badge-device">
-                <i class="fas fa-mobile-alt"></i>
-                <span id="deviceId">Validando...</span>
-            </div>
+    <!-- PORCENTAJE -->
+    <div class="pct-card">
+      <div class="pct-circle">
+        <svg viewBox="0 0 70 70" width="70" height="70">
+          <circle class="track" cx="35" cy="35" r="28"/>
+          <circle class="fill" cx="35" cy="35" r="28" id="pctCircle"
+            stroke-dasharray="176" stroke-dashoffset="176"/>
+        </svg>
+        <div class="pct-text">
+          <span class="pct-num" id="pctNum" style="color:var(--accent2)">0%</span>
+          <span class="pct-small">asist.</span>
         </div>
-
-        <!-- Stats Grid -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-calendar-check"></i>
-                </div>
-                <div class="stat-value" id="statTotal">0</div>
-                <div class="stat-label">Total</div>
-            </div>
-            <div class="stat-card present">
-                <div class="stat-icon">
-                    <i class="fas fa-check"></i>
-                </div>
-                <div class="stat-value" id="statPresent">0</div>
-                <div class="stat-label">Asistencias</div>
-            </div>
-            <div class="stat-card percentage">
-                <div class="stat-icon">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <div class="stat-value" id="statPercentage">0%</div>
-                <div class="stat-label">Porcentaje</div>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-            <button class="action-btn primary" onclick="abrirScanner()">
-                <i class="fas fa-qrcode"></i>
-                <span>Escanear QR</span>
-            </button>
-            <button class="action-btn" onclick="cerrarSesion()">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Cerrar Sesión</span>
-            </button>
-        </div>
-
-        <!-- Activity Section -->
-        <div class="activity-section">
-            <div class="section-header">
-                <div class="section-title">
-                    <i class="fas fa-history"></i>
-                    Actividad Reciente
-                </div>
-                <button class="refresh-btn" onclick="cargarActividadReciente()">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-            </div>
-            <div class="activity-list" id="activityList">
-                <div class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <p>Cargando actividad...</p>
-                </div>
-            </div>
-        </div>
+      </div>
+      <div class="pct-info">
+        <h3 id="pctLabel">Sin datos</h3>
+        <p id="pctSub">Cargando estadísticas…</p>
+      </div>
     </div>
 
-    <!-- SCANNER MODAL -->
-    <div id="scannerModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">
-                    <i class="fas fa-qrcode"></i>
-                    Escanear Código QR
-                </div>
-                <button class="close-btn" onclick="cerrarScanner()">×</button>
-            </div>
-            <div id="reader"></div>
-        </div>
+    <!-- SCAN -->
+    <div class="scan-section">
+      <button class="btn-scan" onclick="abrirScanner()">
+        <span class="scan-icon">📷</span>
+        <span>Escanear QR de asistencia</span>
+      </button>
     </div>
 
-    <!-- CONFIRMATION MODAL (NUEVO) -->
-    <div id="confirmacionModal" class="modal">
-        <div class="modal-content">
-            <div class="confirmation-icon">
-                <i class="fas fa-qrcode"></i>
-            </div>
-            <h3 style="text-align: center; margin-bottom: 10px;">Confirmar Asistencia</h3>
-            <p style="text-align: center; color: var(--gray); margin-bottom: 20px;">
-                ¿Estás seguro de registrar tu asistencia?
-            </p>
-            
-            <div class="class-info-card" id="classInfoCard">
-                <div class="info-row">
-                    <span class="info-label">📚 Materia</span>
-                    <span class="info-value" id="infoMateria">Cargando...</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">👨‍🏫 Profesor</span>
-                    <span class="info-value" id="infoProfesor">Cargando...</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">📅 Fecha</span>
-                    <span class="info-value" id="infoFecha">Cargando...</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">🕐 Hora</span>
-                    <span class="info-value" id="infoHora">Cargando...</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">📍 Ubicación</span>
-                    <span class="info-value" id="infoUbicacion">No disponible</span>
-                </div>
-            </div>
+    <button class="btn-logout-sec" onclick="cerrarSesion()">
+      🚪 Cerrar sesión
+    </button>
 
-            <div class="checkbox-wrapper">
-                <input type="checkbox" id="compartirUbicacion" checked>
-                <label for="compartirUbicacion">
-                    <strong>Compartir mi ubicación</strong><br>
-                    <span style="font-size: 12px; color: var(--gray);">Para validar que estás en el aula</span>
-                </label>
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="cerrarConfirmacion()">
-                    <i class="fas fa-times"></i>
-                    Cancelar
-                </button>
-                <button class="btn-success" onclick="confirmarYEnviar()">
-                    <i class="fas fa-check"></i>
-                    Confirmar
-                </button>
-            </div>
-        </div>
+    <!-- ACTIVIDAD RECIENTE (preview) -->
+    <div class="section-title">Actividad reciente</div>
+    <div class="activity-list" id="actividadPreview">
+      <div class="empty-state">
+        <div class="emoji">📭</div>
+        <div>Cargando actividad…</div>
+      </div>
     </div>
+  </div>
 
-    <!-- SUCCESS MODAL -->
-    <div id="successModal" class="success-modal">
-        <div class="success-content">
-            <div class="success-icon">
-                <i class="fas fa-check"></i>
-            </div>
-            <div class="success-title">¡Asistencia Registrada!</div>
-            <div class="success-message">Tu asistencia ha sido registrada exitosamente</div>
-            <div class="success-details" id="successDetails">
-                <!-- Se llena dinámicamente -->
-            </div>
-            <button class="action-btn primary" onclick="cerrarSuccessModal()" style="width: 100%;">
-                <i class="fas fa-check"></i>
-                Entendido
-            </button>
-        </div>
+  <!-- ── PANEL ACTIVIDAD ── -->
+  <div class="panel" id="panelActividad">
+    <div class="section-title">Historial completo</div>
+    <div class="activity-list" id="actividadFull">
+      <div class="empty-state">
+        <div class="emoji">📭</div>
+        <div>Sin registros aún</div>
+      </div>
     </div>
+  </div>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="loading-content">
-            <div class="spinner"></div>
-            <p>Procesando...</p>
-        </div>
+  <!-- ── PANEL HORARIO ── -->
+  <div class="panel" id="panelHorario">
+    <div class="section-title">Mi horario de clases</div>
+    <div class="horario-grid" id="horarioGrid">
+      <div class="empty-state">
+        <div class="emoji">📅</div>
+        <div>Sin horario registrado</div>
+      </div>
     </div>
+  </div>
 
-    <!-- Toast Container -->
-    <div id="toastContainer" class="toast-container"></div>
+</div><!-- /scroll-area -->
 
-    <!-- Scripts -->
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script>
-        // ===== VARIABLES GLOBALES =====
-        let html5QrCode = null;
-        let scannerActivo = false;
-        let intervaloActualizacion = null;
-        let usuarioId = localStorage.getItem('usuario_id');
-        let qrDataPendiente = null;
+<!-- ── SCANNER SHEET ── -->
+<div class="overlay" id="scannerSheet" onclick="sheetBg(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📷 Escanear QR</div>
+    <div class="sheet-sub">Apunta la cámara al código QR del profesor</div>
+    <div id="qrReader"></div>
+    <button class="btn-scan-cancel" onclick="cerrarScanner()">Cancelar</button>
+  </div>
+</div>
 
-        // ===== INICIALIZACIÓN =====
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("🚀 Iniciando dashboard alumno...");
-            
-            // Verificar autenticación
-            const telefonoId = localStorage.getItem('telefono_id');
-            
-            if (!telefonoId || !usuarioId) {
-                console.error("❌ No hay sesión válida");
-                window.location.href = '/';
-                return;
-            }
-            
-            // Cargar datos iniciales
-            cargarDatosUsuario();
-            cargarEstadisticasReales();
-            cargarActividadReciente();
-            actualizarFecha();
-            
-            // Actualizar cada 30 segundos
-            intervaloActualizacion = setInterval(() => {
-                cargarEstadisticasReales();
-                cargarActividadReciente();
-            }, 30000);
-        });
+<!-- ── CONFIRM MODAL ── -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-card">
+    <div class="modal-icon">📝</div>
+    <div class="modal-title">Confirmar asistencia</div>
+    <div class="modal-sub">¿Deseas registrar tu asistencia en esta clase?</div>
+    <div class="confirm-rows">
+      <div class="confirm-row"><span class="label">📚 Clase</span><span class="val" id="cfClase">–</span></div>
+      <div class="confirm-row"><span class="label">📅 Fecha</span><span class="val" id="cfFecha">–</span></div>
+      <div class="confirm-row"><span class="label">🕐 Hora</span><span class="val" id="cfHora">–</span></div>
+    </div>
+    <div class="geo-warning">
+      <span>📍</span>
+      <span>Se verificará tu ubicación para confirmar que estás en el aula (radio máx. 50m).</span>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="cerrarConfirm()">Cancelar</button>
+      <button class="modal-btn confirm" onclick="enviarAsistencia()">Registrar ✅</button>
+    </div>
+  </div>
+</div>
 
-        // ===== CARGA DE DATOS =====
-        async function cargarDatosUsuario() {
-            try {
-                const response = await fetch('/api/usuario-info', {
-                    headers: {
-                        'telefono-id': localStorage.getItem('telefono_id')
-                    }
-                });
-                
-                if (!response.ok) throw new Error('Error al cargar datos');
-                
-                const data = await response.json();
-                
-                if (data.nombre) {
-                    document.getElementById('userName').textContent = data.nombre;
-                    const iniciales = data.nombre.split(' ')
-                        .map(n => n[0])
-                        .join('')
-                        .substring(0, 2)
-                        .toUpperCase();
-                    document.getElementById('userAvatar').textContent = iniciales;
-                }
-                
-                const deviceId = localStorage.getItem('telefono_id').substring(0, 8);
-                document.getElementById('deviceId').textContent = `ID: ${deviceId}`;
-                
-            } catch (error) {
-                console.error('Error cargando usuario:', error);
-                document.getElementById('userName').textContent = 'Alumno';
-            }
-        }
+<!-- ── SUCCESS MODAL ── -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal-card" style="text-align:center">
+    <div class="success-check">✅</div>
+    <div class="modal-title">¡Asistencia registrada!</div>
+    <div class="modal-sub" id="successInfo">Tu asistencia fue guardada correctamente.</div>
+    <div class="confirm-rows" id="successDetails"></div>
+    <button class="modal-btn confirm" onclick="cerrarSuccess()" style="width:100%;margin-top:4px">Continuar →</button>
+  </div>
+</div>
 
-        async function cargarEstadisticasReales() {
-            try {
-                const response = await fetch('/api/estadisticas-alumno', {
-                    headers: {
-                        'telefono-id': localStorage.getItem('telefono_id')
-                    }
-                });
-                
-                if (!response.ok) throw new Error('Error al cargar estadísticas');
-                
-                const data = await response.json();
-                
-                document.getElementById('statTotal').textContent = data.total_clases || 0;
-                document.getElementById('statPresent').textContent = data.asistencias || 0;
-                
-                const porcentaje = data.total_clases > 0 
-                    ? Math.round((data.asistencias / data.total_clases) * 100)
-                    : 0;
-                document.getElementById('statPercentage').textContent = porcentaje + '%';
-                
-            } catch (error) {
-                console.error('Error cargando estadísticas:', error);
-            }
-        }
+<script>
+// ── STATE ─────────────────────────────────
+const API = '';
+let user = null;
+let qrScanner = null;
+let scannerActive = false;
+let pendingQR = null;
 
-        async function cargarActividadReciente() {
-            try {
-                const response = await fetch('/api/actividad-alumno', {
-                    headers: {
-                        'telefono-id': localStorage.getItem('telefono_id')
-                    }
-                });
-                
-                if (!response.ok) throw new Error('Error al cargar actividad');
-                
-                const data = await response.json();
-                
-                const lista = document.getElementById('activityList');
-                
-                if (!data.actividades || data.actividades.length === 0) {
-                    lista.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-inbox"></i>
-                            <p>No hay actividad reciente</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                lista.innerHTML = data.actividades.map(act => {
-                    const icon = act.estado === 'Presente' ? 'check' : 'times';
-                    const clase = act.estado === 'Presente' ? 'present' : 'absent';
-                    const fecha = new Date(act.fecha).toLocaleDateString('es-MX', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                    
-                    return `
-                        <div class="activity-item">
-                            <div class="activity-icon ${clase}">
-                                <i class="fas fa-${icon}"></i>
-                            </div>
-                            <div class="activity-info">
-                                <div class="activity-title">${act.materia || 'Clase'}</div>
-                                <div class="activity-meta">${fecha} · ${act.estado}</div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-                
-            } catch (error) {
-                console.error('Error cargando actividad:', error);
-                document.getElementById('activityList').innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Error al cargar actividad</p>
-                    </div>
-                `;
-            }
-        }
+// ── INIT ──────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  // Verificar sesión
+  const savedUser = localStorage.getItem('user');
+  if (!savedUser) return redirect();
 
-        function actualizarFecha() {
-            const opciones = { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            };
-            const fecha = new Date().toLocaleDateString('es-MX', opciones);
-            document.getElementById('currentDate').textContent = 
-                fecha.charAt(0).toUpperCase() + fecha.slice(1);
-        }
+  user = JSON.parse(savedUser);
+  if (user.rol !== 'alumno') return redirect('/dashboard/profesor');
 
-        // ===== SCANNER QR =====
-        async function abrirScanner() {
-            const modal = document.getElementById('scannerModal');
-            modal.classList.add('active');
-            
-            try {
-                await iniciarScanner();
-            } catch (error) {
-                console.error("Error al iniciar scanner:", error);
-                mostrarErrorCamara();
-            }
-        }
+  renderProfile();
+  setDate();
+  showLoading('Cargando datos…');
 
-        async function iniciarScanner() {
-            try {
-                if (html5QrCode) {
-                    await html5QrCode.stop();
-                    html5QrCode.clear();
-                    html5QrCode = null;
-                }
-                
-                html5QrCode = new Html5Qrcode("reader");
-                
-                const config = {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 },
-                    aspectRatio: 1.0,
-                    disableFlip: false
-                };
-                
-                try {
-                    const devices = await Html5Qrcode.getCameras();
-                    
-                    if (!devices || devices.length === 0) {
-                        throw new Error("No se encontraron cámaras");
-                    }
-                    
-                    let cameraId = devices[0].id;
-                    const backCamera = devices.find(device => 
-                        device.label.toLowerCase().includes('back') || 
-                        device.label.toLowerCase().includes('rear') ||
-                        device.label.toLowerCase().includes('environment') ||
-                        device.label.toLowerCase().includes('trasera')
-                    );
-                    
-                    if (backCamera) {
-                        cameraId = backCamera.id;
-                    }
-                    
-                    await html5QrCode.start(
-                        cameraId,
-                        config,
-                        onScanSuccess,
-                        onScanError
-                    );
-                    
-                } catch (cameraError) {
-                    await html5QrCode.start(
-                        { facingMode: "environment" },
-                        config,
-                        onScanSuccess,
-                        onScanError
-                    );
-                }
-                
-                scannerActivo = true;
-                
-            } catch (error) {
-                console.error("Error iniciando scanner:", error);
-                throw error;
-            }
-        }
+  await Promise.all([
+    cargarStats(),
+    cargarActividad(),
+    cargarHorario(),
+  ]);
+  hideLoading();
+});
 
-        function mostrarErrorCamara() {
-            document.getElementById('reader').innerHTML = `
-                <div class="camera-error">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <p><strong>No se pudo acceder a la cámara</strong></p>
-                    <p style="font-size: 12px;">Verifica los permisos del navegador</p>
-                    <button class="action-btn" style="margin-top: 10px;" onclick="cerrarScanner()">Cerrar</button>
-                </div>
-            `;
-        }
+function redirect(path='/') { window.location.href = path; }
 
-        function onScanSuccess(decodedText, decodedResult) {
-            // Vibrar si es posible
-            if (navigator.vibrate) {
-                navigator.vibrate(200);
-            }
-            
-            // Detener scanner
-            detenerScanner();
-            cerrarScanner();
-            
-            // Procesar el QR
-            procesarQR(decodedText);
-        }
+// ── PROFILE ───────────────────────────────
+function renderProfile() {
+  const partes = (user.nombre || '').split(' ');
+  const initials = partes.map(p => p[0] || '').join('').slice(0,2).toUpperCase();
+  document.getElementById('avatarEl').textContent = initials || '?';
+  document.getElementById('profileName').textContent = user.nombre || 'Sin nombre';
+  document.getElementById('profileMat').textContent = user.matricula || '–';
+}
 
-        function onScanError(errorMessage) {
-            // Solo ignoramos errores normales
-        }
+function setDate() {
+  const d = new Date();
+  const opts = {weekday:'long',year:'numeric',month:'long',day:'numeric'};
+  document.getElementById('profileDate').textContent =
+    d.toLocaleDateString('es-MX', opts);
+}
 
-        function detenerScanner() {
-            if (html5QrCode && scannerActivo) {
-                html5QrCode.stop()
-                    .then(() => {
-                        html5QrCode.clear();
-                        html5QrCode = null;
-                        scannerActivo = false;
-                    })
-                    .catch(err => {
-                        console.error("Error deteniendo scanner:", err);
-                        scannerActivo = false;
-                    });
-            }
-        }
+// ── STATS ──────────────────────────────────
+async function cargarStats() {
+  try {
+    const r = await fetch(`${API}/api/alumno/${user.id}/estadisticas`);
+    const data = await r.json();
+    if (!data.success) return;
+    const s = data.stats;
 
-        function cerrarScanner() {
-            detenerScanner();
-            document.getElementById('scannerModal').classList.remove('active');
-            document.getElementById('reader').innerHTML = '';
-        }
+    document.getElementById('statPresentes').textContent = s.presentes;
+    document.getElementById('statFaltas').textContent = s.faltas;
+    document.getElementById('statJust').textContent = s.justificadas;
 
-        // ===== NUEVO: PROCESAR QR Y MOSTRAR CONFIRMACIÓN =====
-        async function procesarQR(textoQR) {
-            mostrarLoading(true);
-            
-            try {
-                // Intentar parsear el QR
-                let qrInfo;
-                try {
-                    qrInfo = JSON.parse(textoQR);
-                } catch (e) {
-                    mostrarToast('❌ Código QR inválido', 'error');
-                    mostrarLoading(false);
-                    return;
-                }
-                
-                // Guardar datos del QR
-                qrDataPendiente = {
-                    texto: textoQR,
-                    clase_id: qrInfo.clase_id,
-                    timestamp: qrInfo.timestamp
-                };
-                
-                // Obtener información de la clase
-                const response = await fetch(`/api/clase/${qrInfo.clase_id}`);
-                
-                if (!response.ok) {
-                    throw new Error('No se pudo obtener información de la clase');
-                }
-                
-                const claseData = await response.json();
-                
-                // Actualizar modal de confirmación
-                const ahora = new Date();
-                document.getElementById('infoMateria').textContent = claseData.materia || 'Clase';
-                document.getElementById('infoProfesor').textContent = claseData.profesor_nombre || 'Profesor';
-                document.getElementById('infoFecha').textContent = ahora.toLocaleDateString('es-MX', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-                document.getElementById('infoHora').textContent = ahora.toLocaleTimeString('es-MX', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                document.getElementById('infoUbicacion').textContent = 
-                    claseData.latitud_referencia ? 'Disponible' : 'No requerida';
-                
-                mostrarLoading(false);
-                
-                // Mostrar modal de confirmación
-                document.getElementById('confirmacionModal').classList.add('active');
-                
-            } catch (error) {
-                console.error('Error procesando QR:', error);
-                mostrarLoading(false);
-                mostrarToast('❌ Error al procesar el código QR', 'error');
-            }
-        }
+    // Círculo
+    const pct = s.porcentaje;
+    const circumference = 176;
+    const offset = circumference - (pct / 100) * circumference;
+    const circle = document.getElementById('pctCircle');
+    circle.style.strokeDashoffset = offset;
+    circle.style.stroke = pct >= 80 ? '#22c55e' : pct >= 60 ? '#eab308' : '#ef4444';
+    document.getElementById('pctNum').textContent = `${pct}%`;
+    document.getElementById('pctNum').style.color = pct >= 80 ? '#22c55e' : pct >= 60 ? '#eab308' : '#ef4444';
 
-        // ===== NUEVO: CONFIRMAR Y ENVIAR ASISTENCIA =====
-        async function confirmarYEnviar() {
-            cerrarConfirmacion();
-            mostrarLoading(true);
-            
-            try {
-                const compartirUbicacion = document.getElementById('compartirUbicacion').checked;
-                let latitud = null, longitud = null;
-                
-                // Obtener ubicación si el usuario aceptó
-                if (compartirUbicacion) {
-                    try {
-                        const position = await new Promise((resolve, reject) => {
-                            const timeout = setTimeout(() => reject(new Error('timeout')), 5000);
-                            navigator.geolocation.getCurrentPosition(
-                                (pos) => {
-                                    clearTimeout(timeout);
-                                    resolve(pos);
-                                },
-                                (err) => {
-                                    clearTimeout(timeout);
-                                    reject(err);
-                                },
-                                {
-                                    timeout: 5000,
-                                    maximumAge: 60000,
-                                    enableHighAccuracy: false
-                                }
-                            );
-                        });
-                        
-                        latitud = position.coords.latitude;
-                        longitud = position.coords.longitude;
-                        
-                    } catch (geoError) {
-                        console.log("Ubicación no disponible:", geoError.message);
-                        // Continuamos sin ubicación
-                    }
-                }
-                
-                // Enviar asistencia
-                const response = await fetch('/api/registrar-asistencia', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        qr_data: qrDataPendiente.texto,
-                        telefono_id: localStorage.getItem('telefono_id'),
-                        usuario_id: usuarioId,
-                        latitud: latitud,
-                        longitud: longitud
-                    })
-                });
-                
-                const data = await response.json();
-                
-                mostrarLoading(false);
-                
-                if (data.success) {
-                    // Mostrar modal de éxito
-                    mostrarSuccessModal(data);
-                    
-                    // Recargar datos después de un momento
-                    setTimeout(async () => {
-                        await cargarEstadisticasReales();
-                        await cargarActividadReciente();
-                    }, 1000);
-                    
-                } else {
-                    mostrarToast('❌ ' + (data.message || 'Error al registrar asistencia'), 'error');
-                }
-                
-            } catch (error) {
-                console.error('Error:', error);
-                mostrarLoading(false);
-                mostrarToast('❌ Error de conexión', 'error');
-            }
-        }
+    if (pct >= 90) {
+      document.getElementById('pctLabel').textContent = '🟢 Asistencia excelente';
+      document.getElementById('pctSub').textContent = `${s.presentes} de ${s.total_clases} clases`;
+    } else if (pct >= 80) {
+      document.getElementById('pctLabel').textContent = '🟡 En riesgo menor';
+      document.getElementById('pctSub').textContent = `Necesitas ${Math.ceil(s.total_clases*0.8) - s.presentes} asistencias más`;
+    } else if (pct >= 60) {
+      document.getElementById('pctLabel').textContent = '🟠 Sin ordinario';
+      document.getElementById('pctSub').textContent = `Porcentaje insuficiente para examen`;
+    } else {
+      document.getElementById('pctLabel').textContent = '🔴 Sin extraordinario';
+      document.getElementById('pctSub').textContent = '⚠️ Asistencia crítica';
+    }
+  } catch(e) { console.error('Stats error:', e); }
+}
 
-        function cerrarConfirmacion() {
-            document.getElementById('confirmacionModal').classList.remove('active');
-            qrDataPendiente = null;
-        }
+// ── ACTIVIDAD ─────────────────────────────
+async function cargarActividad() {
+  try {
+    const r = await fetch(`${API}/api/alumno/${user.id}/actividad`);
+    const data = await r.json();
+    if (!data.success) return;
 
-        // ===== SUCCESS MODAL =====
-        function mostrarSuccessModal(data) {
-            const modal = document.getElementById('successModal');
-            const details = document.getElementById('successDetails');
-            
-            const ahora = new Date();
-            const fecha = ahora.toLocaleDateString('es-MX', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            const hora = ahora.toLocaleTimeString('es-MX', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            
-            details.innerHTML = `
-                <div class="success-detail-row">
-                    <span class="success-detail-label">📚 Materia</span>
-                    <span class="success-detail-value">${data.materia || 'Clase'}</span>
-                </div>
-                <div class="success-detail-row">
-                    <span class="success-detail-label">📅 Fecha</span>
-                    <span class="success-detail-value">${fecha}</span>
-                </div>
-                <div class="success-detail-row">
-                    <span class="success-detail-label">🕐 Hora</span>
-                    <span class="success-detail-value">${hora}</span>
-                </div>
-                ${data.profesor ? `
-                <div class="success-detail-row">
-                    <span class="success-detail-label">👨‍🏫 Profesor</span>
-                    <span class="success-detail-value">${data.profesor}</span>
-                </div>
-                ` : ''}
-                ${data.distancia ? `
-                <div class="success-detail-row">
-                    <span class="success-detail-label">📍 Distancia</span>
-                    <span class="success-detail-value">${data.distancia.toFixed(2)}m</span>
-                </div>
-                ` : ''}
-            `;
-            
-            modal.classList.add('active');
-            
-            // Vibración de éxito
-            if (navigator.vibrate) {
-                navigator.vibrate([100, 50, 100]);
-            }
-        }
+    const items = data.actividad;
+    renderActividad('actividadPreview', items.slice(0, 5));
+    renderActividad('actividadFull', items);
+  } catch(e) { console.error('Actividad error:', e); }
+}
 
-        function cerrarSuccessModal() {
-            document.getElementById('successModal').classList.remove('active');
-        }
+function renderActividad(containerId, items) {
+  const el = document.getElementById(containerId);
+  if (!items.length) {
+    el.innerHTML = `<div class="empty-state"><div class="emoji">📭</div><div>Sin registros aún</div></div>`;
+    return;
+  }
+  el.innerHTML = items.map(a => {
+    const clase = a.clase;
+    const titulo = clase?.titulo || 'Clase';
+    const fechaStr = a.fecha ? new Date(a.fecha).toLocaleDateString('es-MX',
+      {weekday:'short',month:'short',day:'numeric'}) : '–';
+    const horaStr = a.fecha ? new Date(a.fecha).toLocaleTimeString('es-MX',
+      {hour:'2-digit',minute:'2-digit'}) : '';
+    let tipo, badge;
+    if (a.valida) { tipo='ok'; badge='Presente'; }
+    else if (a.justificada) { tipo='just'; badge='Justificada'; }
+    else { tipo='miss'; badge='Falta'; }
+    const dist = a.distancia ? ` · ${a.distancia.toFixed(0)}m` : '';
+    return `
+      <div class="activity-item">
+        <div class="activity-dot ${tipo}"></div>
+        <div class="activity-info">
+          <div class="activity-title">${titulo}</div>
+          <div class="activity-sub">${fechaStr} ${horaStr}${dist}</div>
+        </div>
+        <div class="activity-badge ${tipo}">${badge}</div>
+      </div>
+    `;
+  }).join('');
+}
 
-        // ===== UTILERÍAS =====
-        function mostrarLoading(mostrar) {
-            document.getElementById('loadingOverlay').classList.toggle('active', mostrar);
-        }
+// ── HORARIO ───────────────────────────────
+async function cargarHorario() {
+  try {
+    const r = await fetch(`${API}/api/alumno/${user.id}/horario`);
+    const data = await r.json();
+    if (!data.success || !data.horario.length) return;
 
-        function mostrarToast(mensaje, tipo = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${tipo}`;
-            
-            const iconClass = tipo === 'success' ? 'fa-check-circle' : 
-                             tipo === 'error' ? 'fa-exclamation-circle' : 
-                             'fa-info-circle';
-            
-            toast.innerHTML = `
-                <i class="fas ${iconClass}"></i>
-                <span>${mensaje}</span>
-                <button onclick="this.parentElement.remove()">×</button>
-            `;
-            
-            container.appendChild(toast);
-            
-            setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.remove();
-                }
-            }, 5000);
-        }
+    const dias = {1:'Lunes',2:'Martes',3:'Miércoles',4:'Jueves',5:'Viernes'};
+    const hoy = new Date().getDay(); // 0=dom, 1=lun...
+    const byDay = {};
+    data.horario.forEach(h => {
+      const d = h.dia_semana;
+      if (!byDay[d]) byDay[d] = [];
+      byDay[d].push(h);
+    });
 
-        function cerrarSesion() {
-            if (confirm('¿Cerrar sesión?')) {
-                if (intervaloActualizacion) {
-                    clearInterval(intervaloActualizacion);
-                }
-                localStorage.clear();
-                window.location.href = '/';
-            }
-        }
+    const el = document.getElementById('horarioGrid');
+    el.innerHTML = Object.keys(byDay).sort().map(d => {
+      const isToday = parseInt(d) === hoy;
+      const clases = byDay[d].map(h => {
+        const inicio = h.hora_inicio?.slice(0,5) || '–';
+        const fin = h.hora_fin?.slice(0,5) || '–';
+        return `
+          <div class="horario-clase">
+            <div class="horario-time">${inicio} – ${fin}</div>
+            <div>
+              <div class="horario-nombre">${h.materia?.nombre || 'Materia'}</div>
+              <div class="horario-aula">${h.aula ? `Aula: ${h.aula}` : ''} ${h.materia?.codigo ? `· ${h.materia.codigo}` : ''}</div>
+            </div>
+            ${isToday ? '<div class="today-badge">HOY</div>' : ''}
+          </div>
+        `;
+      }).join('');
+      return `
+        <div class="horario-day">
+          <div class="horario-day-header ${isToday?'today':''}">
+            ${isToday?'📍':'📅'} ${dias[d] || `Día ${d}`} ${isToday?'<span style="margin-left:auto;font-size:10px">HOY</span>':''}
+          </div>
+          ${clases}
+        </div>
+      `;
+    }).join('');
+  } catch(e) { console.error('Horario error:', e); }
+}
 
-        // ===== EVENTOS =====
-        window.onclick = function(event) {
-            const scannerModal = document.getElementById('scannerModal');
-            const confirmModal = document.getElementById('confirmacionModal');
-            const successModal = document.getElementById('successModal');
-            
-            if (event.target === scannerModal) {
-                cerrarScanner();
-            }
-            if (event.target === confirmModal) {
-                cerrarConfirmacion();
-            }
-            if (event.target === successModal) {
-                cerrarSuccessModal();
-            }
-        }
+// ── TABS ──────────────────────────────────
+function setTab(tab) {
+  const panels = {inicio:'panelInicio',actividad:'panelActividad',horario:'panelHorario'};
+  const tabs = {inicio:'tabInicio',actividad:'tabActividad',horario:'tabHorario'};
+  Object.keys(panels).forEach(k => {
+    document.getElementById(panels[k]).classList.toggle('active', k===tab);
+    document.getElementById(tabs[k]).classList.toggle('active', k===tab);
+  });
+}
 
-        window.addEventListener('beforeunload', function() {
-            if (scannerActivo) {
-                detenerScanner();
-            }
-            if (intervaloActualizacion) {
-                clearInterval(intervaloActualizacion);
-            }
-        });
+// ── QR SCANNER ────────────────────────────
+async function abrirScanner() {
+  // Pedir permiso de cámara explícitamente
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    stream.getTracks().forEach(t => t.stop());
+  } catch(e) {
+    toast('Necesitas permitir el acceso a la cámara', 'err');
+    return;
+  }
 
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden && scannerActivo) {
-                detenerScanner();
-            }
-        });
-    </script>
+  document.getElementById('scannerSheet').classList.add('active');
+
+  qrScanner = new Html5Qrcode('qrReader');
+  scannerActive = true;
+
+  qrScanner.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 240, height: 240 } },
+    onQRScan,
+    () => {} // frame error silenciado
+  ).catch(e => {
+    toast('Error al iniciar la cámara: ' + e.message, 'err');
+    cerrarScanner();
+  });
+}
+
+async function onQRScan(decoded) {
+  if (!scannerActive) return;
+  await cerrarScanner();
+
+  let qrData;
+  try {
+    qrData = JSON.parse(decoded);
+  } catch {
+    // Si no es JSON, podría ser solo el token directamente
+    qrData = { qr_token: decoded };
+  }
+
+  pendingQR = qrData;
+
+  // Llenar modal confirmación
+  const ahora = new Date();
+  document.getElementById('cfClase').textContent = qrData.titulo || 'Clase';
+  document.getElementById('cfFecha').textContent = ahora.toLocaleDateString('es-MX',{weekday:'short',month:'short',day:'numeric'});
+  document.getElementById('cfHora').textContent = ahora.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+
+  document.getElementById('confirmModal').classList.add('active');
+}
+
+async function cerrarScanner() {
+  scannerActive = false;
+  if (qrScanner) {
+    try { await qrScanner.stop(); } catch {}
+    try { qrScanner.clear(); } catch {}
+    qrScanner = null;
+    document.getElementById('qrReader').innerHTML = '';
+  }
+  document.getElementById('scannerSheet').classList.remove('active');
+}
+
+function sheetBg(e) {
+  if (e.target === document.getElementById('scannerSheet')) cerrarScanner();
+}
+
+// ── CONFIRM / ENVIAR ──────────────────────
+function cerrarConfirm() {
+  document.getElementById('confirmModal').classList.remove('active');
+  pendingQR = null;
+}
+
+async function enviarAsistencia() {
+  if (!pendingQR) return;
+  cerrarConfirm();
+  showLoading('Verificando ubicación…');
+
+  let lat = null, lng = null;
+
+  // Obtener geolocalización (obligatorio)
+  try {
+    const pos = await new Promise((res, rej) => {
+      navigator.geolocation.getCurrentPosition(res, rej, {
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 0,
+      });
+    });
+    lat = pos.coords.latitude;
+    lng = pos.coords.longitude;
+  } catch(e) {
+    hideLoading();
+    toast('📍 No se pudo obtener tu ubicación. Activa el GPS e intenta de nuevo.', 'err');
+    return;
+  }
+
+  updateLoadingText('Registrando asistencia…');
+
+  const deviceId = localStorage.getItem('device_id') || localStorage.getItem('telefono_id');
+  const qrToken = pendingQR.qr_token || pendingQR.qr_code || Object.values(pendingQR)[0];
+
+  try {
+    const r = await fetch(`${API}/api/registrar-asistencia`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        qr_token: qrToken,
+        alumno_id: user.id,
+        latitud: lat,
+        longitud: lng,
+        telefono_id: deviceId,
+      })
+    });
+
+    const data = await r.json();
+    hideLoading();
+
+    if (data.success) {
+      if (navigator.vibrate) navigator.vibrate([80, 40, 120]);
+
+      const dist = data.distancia ? `· ${data.distancia.toFixed(0)}m del aula` : '';
+      document.getElementById('successInfo').textContent = `${data.clase?.titulo || 'Clase'} registrada correctamente`;
+      document.getElementById('successDetails').innerHTML = `
+        <div class="confirm-row"><span class="label">📅 Fecha</span><span class="val">${new Date().toLocaleDateString('es-MX',{month:'short',day:'numeric'})}</span></div>
+        <div class="confirm-row"><span class="label">🕐 Hora</span><span class="val">${new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</span></div>
+        ${data.distancia?`<div class="confirm-row"><span class="label">📍 Distancia</span><span class="val">${data.distancia.toFixed(0)}m</span></div>`:''}
+      `;
+      document.getElementById('successModal').classList.add('active');
+
+      // Recargar stats
+      await cargarStats();
+      await cargarActividad();
+    } else {
+      toast('❌ ' + (data.message || 'Error al registrar'), 'err');
+    }
+  } catch(e) {
+    hideLoading();
+    toast('Error de conexión', 'err');
+  }
+
+  pendingQR = null;
+}
+
+function cerrarSuccess() {
+  document.getElementById('successModal').classList.remove('active');
+}
+
+// ── CERRAR SESIÓN ─────────────────────────
+function cerrarSesion() {
+  if (confirm('¿Deseas cerrar sesión?')) {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    window.location.href = '/';
+  }
+}
+
+// ── UTILS ─────────────────────────────────
+function showLoading(txt='Cargando…') {
+  document.getElementById('loadingText').textContent = txt;
+  document.getElementById('loading').classList.add('active');
+}
+function updateLoadingText(txt) {
+  document.getElementById('loadingText').textContent = txt;
+}
+function hideLoading() {
+  document.getElementById('loading').classList.remove('active');
+}
+
+function toast(msg, type='info') {
+  const wrap = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+</script>
 </body>
 </html>
