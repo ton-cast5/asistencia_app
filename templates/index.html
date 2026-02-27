@@ -389,9 +389,9 @@ async function doLogin() {
 
       // Redirigir según rol
       if (data.user.rol === 'profesor') {
-        window.location.href = '/dashboard/profesor';
+        window.location.href = '/dashboard_profesor';
       } else {
-        window.location.href = '/dashboard/alumno';
+        window.location.href = '/dashboard_alumno';
       }
     } else {
       showAlert(data.message || 'Error al iniciar sesión');
