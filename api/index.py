@@ -116,9 +116,10 @@ def err(msg: str, status=400):
 def h_register(req_obj):
     """POST /api/register"""
     data = req_obj.get_json() or {}
+
+    # Campos requeridos
     required = ["matricula", "nombre", "apellido_paterno", "apellido_materno",
                 "email", "password", "rol", "telefono_id"]
-    
     for f in required:
         if not data.get(f):
             return err(f"Campo requerido: {f}")
@@ -138,27 +139,33 @@ def h_register(req_obj):
     db = get_db()
 
     # Verificar duplicados
-    for field, val in [("email", data["email"]),
-                       ("matricula", data["matricula"].upper()),
+    for field, val in [("email",       data["email"]),
+                       ("matricula",   data["matricula"].upper()),
                        ("telefono_id", data["telefono_id"])]:
         existing = db.select("usuarios", {field: f"eq.{val}"})
         if existing:
-            labels = {"email": "correo electrónico", "matricula": "matrícula", "telefono_id": "dispositivo"}
+            labels = {"email": "correo electrónico",
+                      "matricula": "matrícula",
+                      "telefono_id": "dispositivo"}
             return err(f"El {labels.get(field, field)} ya está registrado")
 
-    nombre_completo = f"{data['nombre']} {data['apellido_paterno']} {data['apellido_materno']}".strip()
+    # nombre = "Nombre(s) ApellidoPaterno ApellidoMaterno" guardado en la
+    # columna `nombre` que ya existe + las 2 columnas nuevas del ALTER TABLE
+    ap  = data["apellido_paterno"].strip().title()
+    am  = data["apellido_materno"].strip().title()
+    nom = data["nombre"].strip().title()
+    nombre_completo = f"{nom} {ap} {am}"
 
     new_user = {
-        "matricula": data["matricula"].upper(),
-        "nombre": nombre_completo,
-        "nombre_corto": data["nombre"],
-        "apellido_paterno": data["apellido_paterno"],
-        "apellido_materno": data["apellido_materno"],
-        "email": data["email"],
-        "password_hash": hp(data["password"]),
-        "rol": data["rol"],
-        "telefono_id": data["telefono_id"],
-        "created_at": datetime.now().isoformat(),
+        "matricula":        data["matricula"].upper(),
+        "nombre":           nombre_completo,          # columna existente
+        "apellido_paterno": ap,                        # columna nueva (ALTER TABLE)
+        "apellido_materno": am,                        # columna nueva (ALTER TABLE)
+        "email":            data["email"].lower().strip(),
+        "password_hash":    hp(data["password"]),
+        "rol":              data["rol"],
+        "telefono_id":      data["telefono_id"],
+        "created_at":       datetime.now().isoformat(),
     }
 
     result = db.insert("usuarios", new_user)
@@ -166,6 +173,10 @@ def h_register(req_obj):
         return err("Error al crear el usuario", 500)
 
     user = result[0]
+    # Enriquecer la respuesta con los campos separados aunque no estén en DB
+    user.setdefault("apellido_paterno", ap)
+    user.setdefault("apellido_materno", am)
+
     return ok({
         "success": True,
         "message": "Registro exitoso",
@@ -498,19 +509,22 @@ def h_registrar_asistencia(req_obj):
     if not result:
         return err("Error al registrar asistencia", 500)
 
+    au = _parse_nombre(alumno)
     return ok({
-        "success": True,
-        "message": "✅ Asistencia registrada",
+        "success":    True,
+        "message":    "✅ Asistencia registrada",
         "asistencia": result[0],
-        "distancia": distancia,
+        "distancia":  distancia,
         "clase": {
-            "id": clase["id"],
+            "id":     clase["id"],
             "titulo": clase.get("titulo"),
-            "fecha": clase.get("fecha"),
+            "fecha":  clase.get("fecha"),
         },
         "alumno": {
-            "nombre": alumno.get("nombre"),
-            "matricula": alumno.get("matricula"),
+            "nombre":           au.get("nombre"),
+            "apellido_paterno": au.get("apellido_paterno"),
+            "apellido_materno": au.get("apellido_materno"),
+            "matricula":        alumno.get("matricula"),
         }
     }, 201)
 
@@ -554,24 +568,28 @@ def h_profesor_dashboard(req_obj, user_id: int):
             categorias["sin_extraordinario"] += 1
             estado = "sin_extraordinario"
 
+        u = _parse_nombre(alumno)
         alumnos_info.append({
-            "id": alumno["id"],
-            "matricula": alumno["matricula"],
-            "nombre": alumno.get("nombre"),
-            "apellido_paterno": alumno.get("apellido_paterno"),
-            "apellido_materno": alumno.get("apellido_materno"),
+            "id":               alumno["id"],
+            "matricula":        alumno["matricula"],
+            "nombre":           alumno.get("nombre"),
+            "apellido_paterno": u["apellido_paterno"],
+            "apellido_materno": u["apellido_materno"],
             "asistencias": presentes,
-            "porcentaje": pct,
-            "estado": estado,
+            "porcentaje":  pct,
+            "estado":      estado,
         })
 
     return ok({
         "success": True,
         "dashboard": {
             "total_alumnos": len(alumnos),
-            "total_clases": total_clases,
-            "categorias": categorias,
-            "alumnos": sorted(alumnos_info, key=lambda x: x.get("apellido_paterno",""))
+            "total_clases":  total_clases,
+            "categorias":    categorias,
+            "alumnos": sorted(alumnos_info,
+                              key=lambda x: (x.get("apellido_paterno",""),
+                                             x.get("apellido_materno",""),
+                                             x.get("nombre","")))
         }
     })
 
@@ -589,11 +607,11 @@ def h_clase_asistencias(req_obj, clase_id: int):
     for a in asistencias:
         alumno = None
         if a.get("alumno_id"):
-            alumnos = db.select("usuarios", {
+            rows = db.select("usuarios", {
                 "id": f"eq.{a['alumno_id']}",
                 "select": "matricula,nombre,apellido_paterno,apellido_materno"
             })
-            alumno = alumnos[0] if alumnos else None
+            alumno = _parse_nombre(rows[0]) if rows else None
         result.append({**a, "alumno": alumno})
 
     return ok({"success": True, "asistencias": result})
@@ -625,12 +643,13 @@ def h_reporte_pdf_data(req_obj, user_id: int):
 
     tabla = []
     for alumno in alumnos:
+        u = _parse_nombre(alumno)
         fila = {
-            "id": alumno["id"],
-            "matricula": alumno["matricula"],
-            "nombre": alumno.get("nombre",""),
-            "apellido_paterno": alumno.get("apellido_paterno",""),
-            "apellido_materno": alumno.get("apellido_materno",""),
+            "id":               alumno["id"],
+            "matricula":        alumno["matricula"],
+            "nombre":           alumno.get("nombre", ""),
+            "apellido_paterno": u["apellido_paterno"],
+            "apellido_materno": u["apellido_materno"],
             "clases": {}
         }
         asis_alumno = db.select("asistencias", {
@@ -648,12 +667,19 @@ def h_reporte_pdf_data(req_obj, user_id: int):
 
         tabla.append(fila)
 
+    # Orden alfabético: ApellidoPaterno → ApellidoMaterno → Nombre
+    tabla.sort(key=lambda x: (
+        x.get("apellido_paterno", "").upper(),
+        x.get("apellido_materno", "").upper(),
+        x.get("nombre", "").upper(),
+    ))
+
     return ok({
         "success": True,
         "reporte": {
-            "clases": clases,
-            "alumnos": tabla,
-            "generado": datetime.now().isoformat()
+            "clases":    clases,
+            "alumnos":   tabla,
+            "generado":  datetime.now().isoformat()
         }
     })
 
@@ -734,9 +760,61 @@ def h_check_field(req_obj, field: str):
 # HELPERS
 # ─────────────────────────────────────────────
 
-def _safe_user(u: dict) -> dict:
-    """Usuario sin password_hash"""
-    return {k: v for k, v in u.items() if k != "password_hash"}
+def _parse_nombre(u: dict) -> dict:
+    """
+    Devuelve el dict del usuario con apellido_paterno / apellido_materno garantizados.
+    Si las columnas nuevas ya existen en la DB, las usa directo.
+    Si no, las deriva del campo `nombre` (formato: "Nombre(s) ApPat ApMat").
+    """
+    ap = (u.get("apellido_paterno") or "").strip()
+    am = (u.get("apellido_materno") or "").strip()
+    nombre_raw = (u.get("nombre") or "").strip()
+
+    if not ap and nombre_raw:
+        partes = nombre_raw.split()
+        if len(partes) >= 3:
+            ap = partes[-2]
+            am = partes[-1]
+            nombre_corto = " ".join(partes[:-2])
+        elif len(partes) == 2:
+            ap = partes[-1]
+            am = ""
+            nombre_corto = partes[0]
+        else:
+            ap = ""
+            am = ""
+            nombre_corto = nombre_raw
+        u = {**u, "apellido_paterno": ap, "apellido_materno": am, "nombre_corto": nombre_corto}
+
+    return u
+    """Usuario sin password_hash. Siempre expone apellido_paterno / apellido_materno."""
+    out = {k: v for k, v in u.items() if k != "password_hash"}
+
+    # Si las columnas nuevas no están (usuarios viejos), las derivamos del campo nombre
+    if not out.get("apellido_paterno") and out.get("nombre"):
+        partes = out["nombre"].split()
+        # Heurística: nombre(s) apellido_paterno apellido_materno
+        if len(partes) >= 3:
+            out["apellido_paterno"] = partes[-2]
+            out["apellido_materno"] = partes[-1]
+            out["nombre_corto"]     = " ".join(partes[:-2])
+        elif len(partes) == 2:
+            out["apellido_paterno"] = partes[-1]
+            out["apellido_materno"] = ""
+            out["nombre_corto"]     = partes[0]
+        else:
+            out["apellido_paterno"] = ""
+            out["apellido_materno"] = ""
+            out["nombre_corto"]     = out["nombre"]
+    else:
+        # Las columnas nuevas existen → derivar nombre_corto
+        nombre = out.get("nombre", "")
+        ap = out.get("apellido_paterno", "")
+        am = out.get("apellido_materno", "")
+        nombre_corto = nombre.replace(ap, "").replace(am, "").strip()
+        out["nombre_corto"] = nombre_corto if nombre_corto else nombre
+
+    return out
 
 
 # ─────────────────────────────────────────────
