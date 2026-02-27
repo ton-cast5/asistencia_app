@@ -428,8 +428,8 @@ document.getElementById('email').addEventListener('keydown', e => {
       const data = await res.json();
       if (data.valid) {
         window.location.href = data.user.rol === 'profesor'
-          ? '/dashboard/profesor'
-          : '/dashboard/alumno';
+          ? '/dashboard_profesor'
+          : '/dashboard_alumno';
       }
     } catch(e) {/* continuar al login */}
   }
