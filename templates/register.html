@@ -525,8 +525,8 @@ async function doRegister() {
 
       setTimeout(() => {
         window.location.href = data.user.rol === 'profesor'
-          ? '/dashboard/profesor'
-          : '/dashboard/alumno';
+          ? '/dashboard_profesor'
+          : '/dashboard_alumno';
       }, 2500);
     } else {
       showAlert(data.message || 'Error al registrar');
